@@ -1,112 +1,178 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { Sun, BookOpen, BarChart3, Users } from "lucide-react";
 
 export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="min-h-screen bg-cream">
-      <main className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-        {/* Hero Section */}
-        <section className="flex min-h-screen flex-col items-center justify-center text-center">
-          <div className="mb-8 inline-flex items-center justify-center rounded-full bg-accent-light px-4 py-2">
-            <Sun className="mr-2 h-5 w-5 text-accent-dark" />
-            <span className="text-sm font-semibold text-forest">
-              Welcome to t'day
-            </span>
-          </div>
+    <div className="paper-bg min-h-screen">
+      <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-4 py-12 sm:px-6">
 
-          <h1 className="mb-6 text-5xl font-bold leading-tight text-forest sm:text-6xl">
-            How was your day?
+        {/* ========================
+            HERO — Logo + tagline + CTA
+            ======================== */}
+        <section className="text-center">
+          {/* Logo — t'day with blinking cursor aligned to baseline */}
+          <h1 className="mb-4 flex items-end justify-center text-5xl sm:text-6xl md:text-7xl">
+            <span className="font-logo font-semibold text-gold">
+              t&apos;day
+            </span>
+            <span
+              className="blinking-cursor ml-1"
+              style={{ fontSize: "0.8em", lineHeight: "1" }}
+            >
+              |
+            </span>
           </h1>
 
-          <p className="mb-12 max-w-2xl text-xl text-warm-gray">
-            Share your daily mood, track your wellbeing, and connect with a global community. Understand your patterns, celebrate your wins, and grow every day.
+          {/* Tagline */}
+          <p className="mx-auto mb-8 max-w-md text-lg text-warm-brown-light sm:text-xl">
+            The world&apos;s first collective online journal.
+            <br />
+            <span className="text-warm-gray">
+              Rate your day. See how the world feels.
+            </span>
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col gap-4 sm:flex-row">
+          {/* CTA */}
+          <div className="flex flex-wrap justify-center gap-3">
             {session ? (
               <Link
                 href="/home"
-                className="inline-flex items-center justify-center rounded-lg bg-forest px-8 py-4 text-lg font-semibold text-cream transition-all hover:bg-forest-dark hover:shadow-card-hover"
+                className="btn-lift rounded-lg bg-forest px-6 py-2.5 text-sm font-medium text-cream-light shadow-card hover:bg-forest-hover"
               >
                 Go to Home
               </Link>
             ) : (
               <>
                 <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center rounded-lg bg-forest px-8 py-4 text-lg font-semibold text-cream transition-all hover:bg-forest-dark hover:shadow-card-hover"
+                  href="/register"
+                  className="btn-lift rounded-lg bg-gold px-6 py-2.5 text-sm font-medium text-warm-brown shadow-card hover:bg-gold-hover"
                 >
-                  Login
+                  Start Rating
                 </Link>
                 <Link
-                  href="/register"
-                  className="inline-flex items-center justify-center rounded-lg border-2 border-forest bg-cream px-8 py-4 text-lg font-semibold text-forest transition-all hover:bg-cream-dark"
+                  href="/login"
+                  className="btn-lift rounded-lg bg-forest px-6 py-2.5 text-sm font-medium text-cream-light shadow-card hover:bg-forest-hover"
                 >
-                  Register
+                  Log In
                 </Link>
               </>
             )}
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="grid gap-8 py-20 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Feature 1: Daily Mood Tracking */}
-          <div className="rounded-lg bg-white p-8 shadow-card transition-all hover:shadow-card-hover">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-light">
-              <Sun className="h-6 w-6 text-accent-dark" />
+        {/* ========================
+            PREVIEW — What the app looks like
+            ======================== */}
+        <section className="mt-16 w-full sm:mt-20">
+          <div className="paper-card px-6 py-6 sm:px-8">
+            {/* Mini header */}
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-warm-gray">
+              <i className="fas fa-globe-americas text-forest" />
+              Today&apos;s Global Mood
             </div>
-            <h3 className="mb-3 text-xl font-bold text-forest">
-              Daily Mood Tracking
-            </h3>
-            <p className="text-warm-gray">
-              Log your daily mood and feelings with a simple, intuitive interface. Rate your day from 1 to 5 and add notes.
-            </p>
-          </div>
 
-          {/* Feature 2: Private Journals */}
-          <div className="rounded-lg bg-white p-8 shadow-card transition-all hover:shadow-card-hover">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-light">
-              <BookOpen className="h-6 w-6 text-accent-dark" />
+            {/* Mockup: rating bars */}
+            <div className="space-y-3">
+              {[
+                { stars: 5, label: "Amazing", pct: 28, color: "#2ECC71" },
+                { stars: 4, label: "Good", pct: 35, color: "#27AE60" },
+                { stars: 3, label: "Okay", pct: 22, color: "#F1C40F" },
+                { stars: 2, label: "Bad", pct: 10, color: "#E67E22" },
+                { stars: 1, label: "Awful", pct: 5, color: "#E74C3C" },
+              ].map((row) => (
+                <div key={row.stars} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-right text-sm text-warm-gray">
+                    {"★".repeat(row.stars)}{"☆".repeat(5 - row.stars)}
+                  </span>
+                  <div className="h-5 min-w-0 flex-1 overflow-hidden rounded-full bg-cream-dark/50">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${row.pct}%`,
+                        backgroundColor: row.color,
+                      }}
+                    />
+                  </div>
+                  <span className="w-10 shrink-0 text-right text-xs text-warm-gray">
+                    {row.pct}%
+                  </span>
+                </div>
+              ))}
             </div>
-            <h3 className="mb-3 text-xl font-bold text-forest">
-              Private Journals
-            </h3>
-            <p className="text-warm-gray">
-              Write detailed journal entries that are completely private. Only you can access your personal reflections.
-            </p>
-          </div>
 
-          {/* Feature 3: Community Insights */}
-          <div className="rounded-lg bg-white p-8 shadow-card transition-all hover:shadow-card-hover">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-light">
-              <Users className="h-6 w-6 text-accent-dark" />
+            {/* Sample country moods */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 border-t border-warm-border/30 pt-4 text-sm text-warm-gray">
+              <span>🇺🇸 4.2</span>
+              <span className="text-warm-border">·</span>
+              <span>🇬🇧 3.8</span>
+              <span className="text-warm-border">·</span>
+              <span>🇩🇪 4.0</span>
+              <span className="text-warm-border">·</span>
+              <span>🇯🇵 3.5</span>
+              <span className="text-warm-border">·</span>
+              <span>🇧🇷 4.5</span>
+              <span className="text-warm-border">·</span>
+              <span>🇦🇱 4.8</span>
+              <span className="text-warm-border">·</span>
+              <span className="italic text-forest">+ 42 countries</span>
             </div>
-            <h3 className="mb-3 text-xl font-bold text-forest">
-              Community Insights
-            </h3>
-            <p className="text-warm-gray">
-              Discover trends and insights from our global community. Connect with others on their wellbeing journey.
-            </p>
-          </div>
 
-          {/* Feature 4: Personal Analytics */}
-          <div className="rounded-lg bg-white p-8 shadow-card transition-all hover:shadow-card-hover">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-light">
-              <BarChart3 className="h-6 w-6 text-accent-dark" />
+            {/* CTA */}
+            <div className="mt-4 text-center">
+              <Link
+                href={session ? "/charts" : "/register"}
+                className="text-sm font-medium text-forest hover:text-forest-hover"
+              >
+                Explore global analytics →
+              </Link>
             </div>
-            <h3 className="mb-3 text-xl font-bold text-forest">
-              Personal Analytics
-            </h3>
-            <p className="text-warm-gray">
-              Visualize your mood patterns over time. Understand what influences your wellbeing with detailed charts.
-            </p>
           </div>
         </section>
+
+        {/* ========================
+            FEATURES — Three tiny pills, not cards
+            ======================== */}
+        <section className="mt-10 flex flex-wrap justify-center gap-3 text-sm text-warm-gray">
+          <span className="rounded-full border border-warm-border/40 bg-white px-4 py-2 shadow-card">
+            <i className="fas fa-star mr-1 text-gold-star" />
+            Rate 1–5 daily
+          </span>
+          <span className="rounded-full border border-warm-border/40 bg-white px-4 py-2 shadow-card">
+            <i className="fas fa-chart-line mr-1 text-forest" />
+            Track your mood
+          </span>
+          <span className="rounded-full border border-warm-border/40 bg-white px-4 py-2 shadow-card">
+            <i className="fas fa-lock mr-1 text-warm-brown-light" />
+            100% anonymous
+          </span>
+        </section>
+
+        {/* ========================
+            FOOTER
+            ======================== */}
+        <footer className="mt-auto w-full pt-12 text-center text-xs text-warm-gray">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Link href="/about" className="hover:text-forest">About</Link>
+            <span>·</span>
+            <Link href="/privacy" className="hover:text-forest">Privacy</Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-forest">Terms</Link>
+            <span>·</span>
+            <Link href="/contact" className="hover:text-forest">Contact</Link>
+          </div>
+          <p className="mt-2">
+            © 2026 t&apos;day — made with{" "}
+            <i className="fas fa-heart text-red-500" /> by{" "}
+            <a
+              href="https://github.com/eneda8"
+              className="text-forest hover:text-forest-light"
+            >
+              eneda
+            </a>
+          </p>
+        </footer>
       </main>
     </div>
   );

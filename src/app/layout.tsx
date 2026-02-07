@@ -5,7 +5,7 @@ import { SessionProvider } from "@/components/auth/SessionProvider";
 export const metadata: Metadata = {
   title: "t'day - How was your day?",
   description:
-    "Share your daily mood, track your wellbeing, and connect with a global community.",
+    "The world's first collective online journal. Rate your day anonymously, track changes over time, and read ratings from all around the world.",
 };
 
 export default function RootLayout({
@@ -17,8 +17,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Courgette&family=Open+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         />
       </head>
       <body className="bg-cream text-gray-800 antialiased">

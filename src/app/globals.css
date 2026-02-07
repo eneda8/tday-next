@@ -1,21 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  /* Warm color palette */
+  /* Warm color palette — matching original t'day */
   --color-cream: #F5F0E6;
-  --color-cream-dark: #E8E0D0;
-  --color-cream-light: #FAF8F3;
+  --color-cream-dark: #E8DED0;
+  --color-cream-light: #FFF8F0;
 
   --color-forest: #2D5F3F;
   --color-forest-dark: #1E4A2E;
-  --color-forest-light: #3D7A52;
+  --color-forest-light: #4A9865;
+  --color-forest-hover: #3D7F5F;
 
-  --color-warm-gray: #6B6B6B;
-  --color-warm-gray-light: #9B9B9B;
+  --color-warm-brown: #3E3529;
+  --color-warm-brown-light: #5C5048;
+  --color-warm-gray: #8B7E6F;
+  --color-warm-border: #D4C4B0;
 
-  --color-accent: #D4A574;
-  --color-accent-light: #E8C9A0;
-  --color-accent-dark: #B8864E;
+  --color-gold: #FFC107;
+  --color-gold-hover: #FFB300;
+  --color-gold-star: #FFD700;
+  --color-gold-light: #ffdb70;
 
   /* Rating colors */
   --color-rating-1: #E74C3C;
@@ -25,30 +29,190 @@
   --color-rating-5: #2ECC71;
 
   /* Font families */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Merriweather', ui-serif, Georgia, serif;
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-logo: 'Courgette', cursive;
 
   /* Border radius */
   --radius-card: 0.75rem;
 
-  /* Shadows */
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+  /* Shadows — warm tones, not cool gray */
+  --shadow-card: 0 2px 8px rgba(62, 53, 41, 0.12);
+  --shadow-card-hover: 0 4px 16px rgba(62, 53, 41, 0.2);
+
+  /* Custom animation */
+  --animate-blink: blink 1s step-end infinite;
 }
 
-/* Base styles */
-body {
-  background-color: var(--color-cream);
-  color: #333;
-  font-family: var(--font-sans);
+/* ========================
+   Keyframes — defined at top level for Lightning CSS compatibility
+   ======================== */
+@keyframes blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
-/* Smooth scrolling */
+/* ========================
+   Base styles
+   ======================== */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for webkit browsers */
+body {
+  background-color: var(--color-cream);
+  color: var(--color-warm-brown);
+  font-family: var(--font-sans);
+}
+
+/* ========================
+   Logo font
+   ======================== */
+.font-logo {
+  font-family: var(--font-logo);
+}
+
+/* ========================
+   Paper texture — lined notebook effect
+   Stronger lines + notebook holes + red margin line
+   ======================== */
+.paper-bg {
+  position: relative;
+  background-color: #FFF8F0;
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(190, 175, 155, 0.4) 0%,
+      transparent 5%
+    );
+  background-size: 100% 24px;
+}
+
+/* Notebook holes — three circles on the left margin */
+.paper-bg::before {
+  content: "";
+  position: fixed;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  z-index: 10;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 9px at 16px 140px, #E0D5C5 8px, transparent 9px),
+    radial-gradient(circle 9px at 16px 380px, #E0D5C5 8px, transparent 9px),
+    radial-gradient(circle 9px at 16px 620px, #E0D5C5 8px, transparent 9px);
+  background-repeat: no-repeat;
+}
+
+/* Red margin line — classic notebook style */
+.paper-bg::after {
+  content: "";
+  position: fixed;
+  left: 64px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: rgba(210, 100, 100, 0.5);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Paper card — white card with subtle lined paper overlay */
+.paper-card {
+  background-color: #FFFFFF;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 19px,
+      rgba(232, 222, 208, 0.3) 19px,
+      rgba(232, 222, 208, 0.3) 20px
+    );
+  border: 1px solid rgba(212, 196, 176, 0.4);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(62, 53, 41, 0.15);
+}
+
+/* ========================
+   Blinking cursor — uses opacity instead of color for reliability
+   ======================== */
+.blinking-cursor {
+  font-weight: 100;
+  font-size: 0.75em;
+  color: #2D5F3F;
+  display: inline-block;
+  animation: blink 1s step-end infinite;
+}
+
+/* ========================
+   Star rating display
+   ======================== */
+.star-display {
+  color: var(--color-warm-border);
+  letter-spacing: 2px;
+}
+
+.star-filled {
+  color: var(--color-gold-star);
+}
+
+/* ========================
+   Button hover lift effect
+   ======================== */
+.btn-lift {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(62, 53, 41, 0.25);
+}
+
+/* ========================
+   Chart card styling
+   ======================== */
+.chart-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(212, 196, 176, 0.4);
+  box-shadow: 0 2px 8px rgba(62, 53, 41, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(62, 53, 41, 0.2);
+}
+
+/* ========================
+   Latest rating hover effect
+   ======================== */
+.rating-row {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: rgba(255, 248, 240, 0.6);
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.rating-row:hover {
+  background-color: rgba(255, 248, 240, 1);
+  border-left-color: var(--color-forest);
+  transform: translateX(4px);
+}
+
+/* ========================
+   Smooth transitions on interactive elements
+   ======================== */
+a, button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* ========================
+   Custom scrollbar
+   ======================== */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -58,7 +222,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-warm-gray-light);
+  background: var(--color-warm-border);
   border-radius: 4px;
 }
 

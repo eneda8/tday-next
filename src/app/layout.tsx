@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
+import { Open_Sans, Courgette } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
-import { SessionProvider } from "@/components/auth/SessionProvider";
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const courgette = Courgette({
+  subsets: ["latin"],
+  variable: "--font-logo",
+  weight: "400",
+});
 
 export const metadata: Metadata = {
-  title: "t'day - How was your day?",
-  description:
-    "The world's first collective online journal. Rate your day anonymously, track changes over time, and read ratings from all around the world.",
+  title: "t'day",
+  description: "The world's first collective online journal. Rate your day. See how the world feels.",
 };
 
 export default function RootLayout({
@@ -14,18 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${openSans.variable} ${courgette.variable}`}>
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Courgette&family=Open+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
       </head>
-      <body className="bg-cream text-gray-800 antialiased">
+      <body>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

@@ -1,95 +1,64 @@
 import NextAuth from "next-auth";
-import type { Session } from "next-auth";
-import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { dbConnect } from "./db";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
-import { authConfig } from "./auth.config";
+import authConfig from "./auth.config";
 
-// Type declarations for extended session and token
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      username: string;
-      email: string;
-      isVerified: boolean;
-      avatar?: string;
-    };
-  }
-
-  interface User {
-    id: string;
-    username: string;
-    email: string;
-    isVerified: boolean;
-    avatar?: string;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    username: string;
-    email: string;
-    isVerified: boolean;
-    avatar?: string;
-  }
-}
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
-      name: "credentials",
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("Missing username or password");
+          return null;
         }
 
         try {
           await dbConnect();
 
-          const user = await User.findOne({
-            username: { $regex: `^${credentials.username}$`, $options: "i" },
-          }).select("+password");
-
-          if (!user) {
-            throw new Error("Invalid username or password");
-          }
-
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password as string,
-            user.password
+          const user = await User.authenticateUser(
+            credentials.username as string,
+            credentials.password as string
           );
 
-          if (!isPasswordValid) {
-            throw new Error("Invalid username or password");
-          }
-
-          if (!user.isVerified) {
-            throw new Error("Please verify your email before logging in");
+          if (!user) {
+            return null;
           }
 
           return {
             id: user._id.toString(),
-            username: user.username,
+            name: user.username,
             email: user.email,
-            isVerified: user.isVerified,
-            avatar: user.avatar?.path || undefined,
+            image: user.avatar?.path || null,
           };
         } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(error.message);
-          }
-          throw new Error("Authentication failed");
+          console.error("Authorization error:", error);
+          return null;
         }
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token?.id && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
 });

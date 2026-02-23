@@ -1,145 +1,131 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IUser, IAvatar, ICountry, ICoverPhoto, AgeGroup, Gender } from '@/types';
+import mongoose, { Schema, Document } from "mongoose";
+import crypto from "crypto";
 
-// Avatar sub-document schema
-const AvatarSchema = new Schema<IAvatar>(
+export interface IUser extends Document {
+  username: string;
+  email: string;
+  hash: string;
+  salt: string;
+  ageGroup?: string;
+  gender?: string;
+  country?: {
+    name: string;
+    flag: string;
+  };
+  timezone?: string;
+  defaultTimezone?: string;
+  avatar?: {
+    path: string;
+    filename: string;
+  };
+  bio?: string;
+  coverColor?: string;
+  coverPhoto?: {
+    path: string;
+    filename: string;
+  };
+  posts?: mongoose.Types.ObjectId[];
+  comments?: mongoose.Types.ObjectId[];
+  journals?: mongoose.Types.ObjectId[];
+  bookmarks?: mongoose.Types.ObjectId[];
+  postedToday?: boolean;
+  todaysPost?: string;
+  postStreak?: number;
+  average?: number;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  isVerified?: boolean;
+  verifyEmailToken?: string;
+  verifyTokenExpires?: Date;
+  termsAgreement?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface IUserModel extends mongoose.Model<IUser> {
+  authenticateUser(username: string, password: string): Promise<IUser | null>;
+  hashPassword(password: string): { hash: string; salt: string };
+}
+
+const UserSchema = new Schema<IUser, IUserModel>(
   {
-    path: {
+    username: {
       type: String,
-      default: 'https://res.cloudinary.com/dw3o86f8j/image/upload/v1634179812/t%27day/avatars/defaultAvatar2_qyqc9t.png',
-    },
-    filename: {
-      type: String,
-      default: "t'day/avatars/defaultAvatar2_qyqc9t.png",
-    },
-  },
-  { _id: false }
-);
-
-// Virtual getter for thumbnail
-AvatarSchema.virtual('thumbnail').get(function (this: IAvatar) {
-  if (!this.path) return null;
-  return this.path.replace('/upload', '/upload/w_200');
-});
-
-// Virtual getter for profile
-AvatarSchema.virtual('profile').get(function (this: IAvatar) {
-  if (!this.path) return null;
-  return this.path;
-});
-
-// Country sub-document schema
-const CountrySchema = new Schema<ICountry>(
-  {
-    name: {
-      type: String,
-      required: true,
-    },
-    flag: {
-      type: String,
-      required: true,
-    },
-  },
-  { _id: false }
-);
-
-// Cover photo sub-document schema
-const CoverPhotoSchema = new Schema<ICoverPhoto>(
-  {
-    path: {
-      type: String,
-    },
-    filename: {
-      type: String,
-    },
-  },
-  { _id: false }
-);
-
-// Virtual getter for profile on CoverPhotoSchema
-CoverPhotoSchema.virtual('profile').get(function (this: ICoverPhoto) {
-  if (!this.path) return null;
-  return this.path;
-});
-
-// User document interface for Mongoose
-interface IUserDocument extends IUser, Document {}
-
-// Main User schema
-const UserSchema = new Schema<IUserDocument>(
-  {
-    email: {
-      type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Username is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      minlength: 1,
     },
-    username: {
+    email: {
       type: String,
-      required: [true, 'Username is required'],
+      required: [true, "Email is required"],
       unique: true,
+      lowercase: true,
       trim: true,
-      minlength: [3, 'Username must be at least 3 characters'],
-      maxlength: [30, 'Username cannot exceed 30 characters'],
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        "Please provide a valid email",
+      ],
     },
-    password: {
+    hash: {
       type: String,
-      select: false,
+      required: true,
     },
-    ageGroup: {
+    salt: {
       type: String,
-      enum: ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'],
+      required: true,
     },
-    gender: {
-      type: String,
-      enum: ['male', 'female', 'non-binary', 'other', 'prefer-not-to-say'],
+    ageGroup: String,
+    gender: String,
+    country: {
+      name: String,
+      flag: String,
     },
-    country: CountrySchema,
     timezone: String,
     defaultTimezone: String,
     avatar: {
-      type: AvatarSchema,
-      default: {},
+      path: String,
+      filename: String,
     },
-    bio: {
+    bio: String,
+    coverColor: {
       type: String,
-      maxlength: [500, 'Bio cannot exceed 500 characters'],
+      default: "#343a40",
     },
-    coverColor: String,
-    coverPhoto: CoverPhotoSchema,
+    coverPhoto: {
+      path: String,
+      filename: String,
+    },
     posts: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Post',
+        ref: "Post",
       },
     ],
     comments: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Comment',
+        ref: "Comment",
       },
     ],
     journals: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Journal',
+        ref: "Journal",
       },
     ],
     bookmarks: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Post',
+        ref: "Bookmark",
       },
     ],
     postedToday: {
       type: Boolean,
       default: false,
     },
-    todaysPost: {
-      type: String,
-    },
+    todaysPost: String,
     postStreak: {
       type: Number,
       default: 0,
@@ -161,13 +147,49 @@ const UserSchema = new Schema<IUserDocument>(
       default: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Prevent recompilation in Next.js
-const User = mongoose.models.User || mongoose.model<IUserDocument>('User', UserSchema);
+// Static method to authenticate user with pbkdf2
+UserSchema.statics.authenticateUser = async function (
+  username: string,
+  password: string
+): Promise<IUser | null> {
+  try {
+    const user = await this.findOne({ username: username.toLowerCase() });
 
-export default User;
-export type { IUserDocument };
+    if (!user) {
+      return null;
+    }
+
+    // Verify password using pbkdf2 with passport-local-mongoose defaults
+    // sha256, 25000 iterations, 512 byte key length
+    const hash = crypto
+      .pbkdf2Sync(password, user.salt, 25000, 512, "sha256")
+      .toString("hex");
+
+    if (hash === user.hash) {
+      return user;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error authenticating user:", error);
+    return null;
+  }
+};
+
+// Static method to hash password with pbkdf2
+UserSchema.statics.hashPassword = function (
+  password: string
+): { hash: string; salt: string } {
+  const salt = crypto.randomBytes(32).toString("hex");
+  const hash = crypto
+    .pbkdf2Sync(password, salt, 25000, 512, "sha256")
+    .toString("hex");
+
+  return { hash, salt };
+};
+
+export default mongoose.models.User ||
+  mongoose.model<IUser, IUserModel>("User", UserSchema);

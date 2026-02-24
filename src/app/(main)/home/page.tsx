@@ -145,6 +145,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     (freshUser.bookmarks || []).map((b: any) => b.toString())
   );
 
+  // ===== Current user avatar for inline comments =====
+  const currentUserAvatar = freshUser.avatar?.path
+    ? freshUser.avatar.path.includes("/upload")
+      ? freshUser.avatar.path.replace("/upload", "/upload/w_40,h_40,c_fill")
+      : String(freshUser.avatar.path)
+    : "";
+
   // ===== Serialize =====
   const serializedPosts = posts.map(serializePost);
 
@@ -213,7 +220,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   key={post._id}
                   post={post}
                   currentUserId={userId}
+                  currentUserAvatar={currentUserAvatar}
                   isBookmarked={userBookmarkIds.has(post._id)}
+                  todayOnly
                 />
               ))
             ) : (

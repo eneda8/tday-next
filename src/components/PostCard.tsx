@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deletePost, updatePost, toggleBookmark } from "@/app/actions/posts";
+import { addComment } from "@/app/actions/comments";
 import { countryNameToEmoji } from "@/lib/utils";
 
 interface PostCardProps {
@@ -24,7 +25,10 @@ interface PostCardProps {
     createdAt: string;
   };
   currentUserId: string;
+  currentUserAvatar?: string;
   isBookmarked?: boolean;
+  /** If true, show only time (home page where all posts are today). Otherwise show date + time. */
+  todayOnly?: boolean;
 }
 
 const RATING_COLORS: Record<number, string> = {
@@ -48,7 +52,61 @@ function isSameDay(postDate: string): boolean {
   return postDate === today;
 }
 
-export default function PostCard({ post, currentUserId, isBookmarked: initialBookmarked = false }: PostCardProps) {
+/**
+ * Extract a timestamp from createdAt or fall back to the ObjectId's embedded timestamp.
+ * MongoDB ObjectIds encode creation time in the first 4 bytes.
+ *
+ * todayOnly = true  → "9:37:58 pm" (home page, all posts are today)
+ * todayOnly = false → "2/23/2026, 9:37:58 pm" (profile, search, bookmarks)
+ */
+function getTimestamp(createdAt: string, postId: string, todayOnly: boolean): string {
+  try {
+    let d: Date | null = null;
+
+    // Try createdAt first
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 2000) {
+        d = parsed;
+      }
+    }
+
+    // Fall back to ObjectId timestamp (first 8 hex chars = seconds since epoch)
+    if (!d && postId && postId.length >= 8) {
+      const ts = parseInt(postId.substring(0, 8), 16) * 1000;
+      const parsed = new Date(ts);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+
+    if (!d) return "";
+
+    const time = d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    }).toLowerCase();
+
+    if (todayOnly) {
+      return time;
+    }
+
+    // Short date format: 2/23/2026
+    const date = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+    return `${date}, ${time}`;
+  } catch {
+    return "";
+  }
+}
+
+export default function PostCard({
+  post,
+  currentUserId,
+  currentUserAvatar,
+  isBookmarked: initialBookmarked = false,
+  todayOnly = false,
+}: PostCardProps) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -59,16 +117,25 @@ export default function PostCard({ post, currentUserId, isBookmarked: initialBoo
   const [bookmarked, setBookmarked] = useState(initialBookmarked);
   const [bookmarking, setBookmarking] = useState(false);
 
+  // Inline comment state
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.comments || 0);
+
   const isOwn = currentUserId === post.authorID;
   const canEdit = isOwn && isSameDay(post.date);
   const flag = countryNameToEmoji(post.authorCountry || "");
   const ratingColor = RATING_COLORS[post.rating] || RATING_COLORS[3];
+  const timestamp = getTimestamp(post.createdAt, post._id, todayOnly);
 
   const avatarUrl = post.authorAvatar
     ? post.authorAvatar.includes("/upload")
       ? post.authorAvatar.replace("/upload", "/upload/w_80,h_80,c_fill")
       : post.authorAvatar
     : DEFAULT_AVATAR;
+
+  const commentAvatarUrl = currentUserAvatar || DEFAULT_AVATAR;
 
   const handleDelete = async () => {
     try {
@@ -97,6 +164,27 @@ export default function PostCard({ post, currentUserId, isBookmarked: initialBoo
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleInlineComment = async () => {
+    const trimmed = commentBody.trim();
+    if (!trimmed || commentSubmitting) return;
+
+    setCommentSubmitting(true);
+    try {
+      const result = await addComment(post._id, trimmed);
+      if (result.error) {
+        console.error(result.error);
+      } else {
+        setCommentBody("");
+        setCommentCount((c) => c + 1);
+        setShowCommentInput(false);
+      }
+    } catch (err) {
+      console.error("Failed to comment:", err);
+    } finally {
+      setCommentSubmitting(false);
     }
   };
 
@@ -290,16 +378,40 @@ export default function PostCard({ post, currentUserId, isBookmarked: initialBoo
         </div>
       )}
 
+      {/* Timestamp — clickable, links to individual post */}
+      {timestamp && (
+        <div className="mb-2">
+          <Link
+            href={"/post/" + post._id}
+            className="inline-flex items-center gap-1 text-[11px] text-warm-gray hover:text-forest hover:underline transition-colors"
+            title="View post"
+          >
+            <i className="far fa-clock text-[9px]" />
+            {timestamp}
+          </Link>
+        </div>
+      )}
+
       {/* Footer actions */}
       <div className="flex items-center gap-4 pt-3 border-t border-warm-border/20 text-warm-gray text-xs">
-        {/* Comments */}
-        <Link
-          href={"/post/" + post._id}
+        {/* Comments — toggle inline input */}
+        <button
+          onClick={() => setShowCommentInput(!showCommentInput)}
           className="flex items-center gap-1.5 hover:text-forest transition-colors"
         >
           <i className="far fa-comment" />
-          <span>{post.comments || 0}</span>
-        </Link>
+          <span>{commentCount}</span>
+        </button>
+
+        {/* View all comments link */}
+        {commentCount > 0 && (
+          <Link
+            href={"/post/" + post._id}
+            className="flex items-center gap-1.5 hover:text-forest transition-colors"
+          >
+            View all
+          </Link>
+        )}
 
         {/* Copy link */}
         <div className="relative">
@@ -322,12 +434,10 @@ export default function PostCard({ post, currentUserId, isBookmarked: initialBoo
           onClick={async () => {
             if (bookmarking) return;
             setBookmarking(true);
-            // Optimistic update
             setBookmarked(!bookmarked);
             try {
               const result = await toggleBookmark(post._id);
               if (result.error) {
-                // Revert on error
                 setBookmarked(bookmarked);
                 console.error(result.error);
               }
@@ -347,6 +457,47 @@ export default function PostCard({ post, currentUserId, isBookmarked: initialBoo
           <i className={bookmarked ? "fas fa-bookmark" : "far fa-bookmark"} />
         </button>
       </div>
+
+      {/* Inline comment input */}
+      {showCommentInput && (
+        <div className="pt-3 mt-3 border-t border-warm-border/15">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-cream-dark">
+              <img
+                src={commentAvatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <input
+              type="text"
+              value={commentBody}
+              onChange={(e) => setCommentBody(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleInlineComment();
+                }
+              }}
+              placeholder="Write a comment..."
+              className="flex-1 bg-cream-light border border-warm-border/30 rounded-full px-3 py-1.5 text-xs text-warm-brown placeholder:text-warm-gray/60 focus:outline-none focus:ring-2 focus:ring-forest/30"
+              disabled={commentSubmitting}
+              autoFocus
+            />
+            <button
+              onClick={handleInlineComment}
+              disabled={!commentBody.trim() || commentSubmitting}
+              className="px-3 py-1.5 bg-forest text-cream-light text-xs font-medium rounded-full hover:bg-forest-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {commentSubmitting ? (
+                <i className="fas fa-spinner fa-spin" />
+              ) : (
+                <i className="fas fa-paper-plane" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (

@@ -2,25 +2,38 @@ import { auth } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
 import Navbar from "@/components/Navbar";
-import { redirect } from "next/navigation";
+import {
+  checkAndResetPostedToday,
+  checkAndResetStreak,
+} from "@/lib/postHelpers";
 
-export default async function MainLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+export default async function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  let postedToday = false;
 
-  await dbConnect();
-  const user = await User.findById(session.user.id).lean();
-  if (!user) redirect("/login");
+  try {
+    const session = await auth();
+    if (session?.user?.id) {
+      await dbConnect();
+      await checkAndResetPostedToday(session.user.id);
+      await checkAndResetStreak(session.user.id);
+      const user = await User.findById(session.user.id)
+        .select("postedToday")
+        .lean();
+      if (user) {
+        postedToday = Boolean(user.postedToday);
+      }
+    }
+  } catch (err) {
+    console.error("Layout auth check error:", err);
+  }
 
   return (
     <div className="min-h-screen paper-bg">
-      <Navbar user={{
-        username: user.username || "",
-        avatar: user.avatar,
-        postedToday: user.postedToday || false,
-        todaysPost: user.todaysPost || "",
-        isVerified: user.isVerified || false,
-      }} />
+      <Navbar postedToday={postedToday} />
       <main>{children}</main>
     </div>
   );

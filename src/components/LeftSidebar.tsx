@@ -16,17 +16,17 @@ export default function LeftSidebar({ today }: LeftSidebarProps) {
   const charts = [
     {
       id: "dab42b0e-905e-459c-951b-6a8dde5b28ed",
-      height: 180,
+      height: 260,
       maxDataAge: 10,
     },
     {
       id: "3d402d54-0338-46ff-ae2f-400d23fbed7a",
-      height: 200,
+      height: 260,
       maxDataAge: 60,
     },
     {
       id: "6cefcd4d-caef-4025-9446-9ddbf2c3a6e9",
-      height: 200,
+      height: 260,
       maxDataAge: 60,
     },
   ];

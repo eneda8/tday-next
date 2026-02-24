@@ -15,9 +15,9 @@ interface ProfileChartsProps {
 
 export default function ProfileCharts({ chartFilter }: ProfileChartsProps) {
   return (
-    <div className="sticky top-4">
-      {/* Heading — matched to tabs row: same py-2.5, border-b-2, mb-4 */}
-      <div className="flex items-center gap-1.5 border-b-2 border-forest mb-4 py-2.5 text-sm font-medium text-forest">
+    <div>
+      {/* Heading */}
+      <div className="flex items-center gap-1.5 mb-4 py-2.5 text-sm font-medium text-forest">
         <i className="fas fa-chart-bar text-xs" />
         My Charts
       </div>
@@ -35,7 +35,7 @@ export default function ProfileCharts({ chartFilter }: ProfileChartsProps) {
                 borderRadius: "8px",
               }}
               width="100%"
-              height="180"
+              height="260"
               src={`${CHART_BASE}?id=${chart.id}&filter=${chartFilter}&maxDataAge=300&theme=light&autoRefresh=true`}
             />
           </div>

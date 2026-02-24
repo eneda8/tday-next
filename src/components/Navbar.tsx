@@ -6,7 +6,11 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import RateModal from "@/components/RateModal";
 
-export default function Navbar() {
+interface NavbarProps {
+  postedToday?: boolean;
+}
+
+export default function Navbar({ postedToday = false }: NavbarProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -91,14 +95,16 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Rate button (opens modal) */}
-            <button
-              onClick={() => setShowRateModal(true)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-warm-gray hover:bg-cream-dark/50 hover:text-warm-brown transition-colors"
-            >
-              <i className="fas fa-star text-xs" />
-              Rate
-            </button>
+            {/* Rate button — only show if user hasn't posted today */}
+            {!postedToday && (
+              <button
+                onClick={() => setShowRateModal(true)}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-warm-gray hover:bg-cream-dark/50 hover:text-warm-brown transition-colors"
+              >
+                <i className="fas fa-star text-xs" />
+                Rate
+              </button>
+            )}
 
             {/* Write button — quick journal access from anywhere */}
             <Link
@@ -230,17 +236,19 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Rate button in mobile sidebar */}
-            <button
-              onClick={() => {
-                setShowRateModal(true);
-                setSidebarOpen(false);
-              }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-warm-brown hover:bg-cream-light transition-colors"
-            >
-              <i className="fas fa-star w-4 text-center text-xs" />
-              Rate
-            </button>
+            {/* Rate button in mobile sidebar — only show if not posted */}
+            {!postedToday && (
+              <button
+                onClick={() => {
+                  setShowRateModal(true);
+                  setSidebarOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-warm-brown hover:bg-cream-light transition-colors"
+              >
+                <i className="fas fa-star w-4 text-center text-xs" />
+                Rate
+              </button>
+            )}
           </div>
 
           {/* Secondary links */}

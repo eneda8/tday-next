@@ -10,6 +10,66 @@ import { revalidatePath } from "next/cache";
 interface ActionResponse {
   success?: boolean;
   error?: string;
+  commentId?: string;
+}
+
+/**
+ * Add a comment to a post.
+ */
+export async function addComment(
+  postId: string,
+  body: string
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "You must be logged in" };
+    }
+
+    const trimmed = body.trim();
+    if (!trimmed) {
+      return { error: "Comment cannot be empty" };
+    }
+
+    if (trimmed.length > 2000) {
+      return { error: "Comment is too long (max 2000 characters)" };
+    }
+
+    await dbConnect();
+
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return { error: "Post not found" };
+    }
+
+    const comment = new Comment({
+      body: trimmed,
+      author: user._id,
+      post: post._id,
+    });
+
+    await comment.save();
+
+    // Add to post's comments array
+    post.comments = post.comments || [];
+    post.comments.push(comment._id);
+    await post.save();
+
+    // Add to user's comments array
+    user.comments = user.comments || [];
+    user.comments.push(comment._id);
+    await user.save();
+
+    return { success: true, commentId: comment._id.toString() };
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    return { error: "Something went wrong." };
+  }
 }
 
 /**

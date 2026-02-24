@@ -209,9 +209,9 @@ export default async function ProfilePage() {
       <ProfileHeader user={profileUser} />
 
       {/* Content: tabs + right sidebar charts */}
-      <div className="flex gap-5">
+      <div className="flex gap-6">
         {/* Main column: tabs */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 w-full lg:w-[55%] lg:shrink-0">
           <ProfileTabs
             currentUserId={userId}
             posts={serializedPosts}
@@ -221,8 +221,8 @@ export default async function ProfilePage() {
           />
         </div>
 
-        {/* Right sidebar: charts — hidden on small screens */}
-        <div className="hidden lg:block w-64 shrink-0">
+        {/* Right sidebar: charts — takes remaining space */}
+        <div className="hidden lg:block flex-1 min-w-0">
           <ProfileCharts chartFilter={chartFilter} />
         </div>
       </div>

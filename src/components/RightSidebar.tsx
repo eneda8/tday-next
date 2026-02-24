@@ -132,7 +132,7 @@ export default function RightSidebar({
             </h3>
             <div className="text-xs text-warm-gray flex items-center justify-center gap-1">
               @{user.username}
-              {flag && <span className="text-sm">{flag}</span>}
+              {flag && <span className="text-lg">{flag}</span>}
             </div>
           </div>
 

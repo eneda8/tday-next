@@ -177,7 +177,7 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
                 Anonymous
               </span>
               {flag && (
-                <span className="text-sm" title={post.authorCountry}>
+                <span className="text-lg" title={post.authorCountry}>
                   {flag}
                 </span>
               )}

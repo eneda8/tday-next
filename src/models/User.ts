@@ -118,7 +118,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
     bookmarks: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Bookmark",
+        ref: "Post",
       },
     ],
     postedToday: {

@@ -16,34 +16,32 @@ export default async function JournalViewPage({ params }: JournalPageProps) {
 
   const { journalId } = await params;
 
-  // Validate ObjectId format
   if (!journalId.match(/^[0-9a-fA-F]{24}$/)) {
     notFound();
   }
 
-  const journal = await Journal.findById(journalId).lean();
+  // Do NOT use .lean() — decryption plugin requires Mongoose documents
+  const journal = await Journal.findById(journalId);
 
   if (!journal) {
     notFound();
   }
 
-  // Authorization — only the author can view their journal
-  if ((journal as any).author.toString() !== session.user.id) {
+  if (journal.author.toString() !== session.user.id) {
     redirect("/home");
   }
 
-  // Serialize for client component
   const serialized = {
-    _id: String((journal as any)._id),
-    date: String((journal as any).date || ""),
-    title: (journal as any).title ? String((journal as any).title) : "",
-    body: String((journal as any).body || ""),
-    edited: Boolean((journal as any).edited),
-    createdAt: (journal as any).createdAt
-      ? new Date((journal as any).createdAt).toISOString()
+    _id: String(journal._id),
+    date: String(journal.date || ""),
+    title: journal.title ? String(journal.title) : "",
+    body: String(journal.body || ""),
+    edited: Boolean(journal.edited),
+    createdAt: journal.createdAt
+      ? new Date(journal.createdAt).toISOString()
       : "",
-    updatedAt: (journal as any).updatedAt
-      ? new Date((journal as any).updatedAt).toISOString()
+    updatedAt: journal.updatedAt
+      ? new Date(journal.updatedAt).toISOString()
       : "",
   };
 

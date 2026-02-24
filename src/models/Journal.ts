@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
+// @ts-expect-error — no types for mongoose-field-encryption
+import { fieldEncryption } from "mongoose-field-encryption";
 
 export interface IJournal extends Document {
   date: string;
@@ -21,15 +23,16 @@ const JournalSchema = new Schema<IJournal>(
   { timestamps: true }
 );
 
-// NOTE: The original app uses mongoose-field-encryption to encrypt body/title.
-// If you need to read existing encrypted journals, install mongoose-field-encryption:
-//   npm install mongoose-field-encryption
-// Then uncomment:
-// import { fieldEncryption } from "mongoose-field-encryption";
-// JournalSchema.plugin(fieldEncryption, {
-//   fields: ["body", "title"],
-//   secret: process.env.JOURNAL_SECRET || "",
-// });
+// Encrypt body and title fields (matches original Express app)
+JournalSchema.plugin(fieldEncryption, {
+  fields: ["body", "title"],
+  secret: process.env.JOURNAL_SECRET || "",
+});
 
-export default mongoose.models.Journal ||
-  mongoose.model<IJournal>("Journal", JournalSchema);
+// Force fresh model registration to ensure encryption plugin is always applied
+// (Next.js hot reload can cache models without the plugin)
+if (mongoose.models.Journal) {
+  delete mongoose.models.Journal;
+}
+
+export default mongoose.model<IJournal>("Journal", JournalSchema);

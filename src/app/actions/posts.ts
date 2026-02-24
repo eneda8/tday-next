@@ -121,11 +121,10 @@ export async function deletePost(postId: string): Promise<ActionResponse> {
       return { error: "Not authorized" };
     }
 
-    // Check if within 24 hours
-    const hoursSince =
-      (Date.now() - new Date(post.createdAt).getTime()) / 3600000;
-    if (hoursSince > 24) {
-      return { error: "Can only delete posts within 24 hours" };
+    // Can only delete posts from today
+    const today = getToday();
+    if (post.date !== today) {
+      return { error: "Can only delete today's post" };
     }
 
     const user = await User.findById(session.user.id);
@@ -133,8 +132,7 @@ export async function deletePost(postId: string): Promise<ActionResponse> {
       return { error: "User not found" };
     }
 
-    const today = getToday();
-    const isTodays = post.date === today;
+    const isTodays = true;
 
     // Remove post reference from user
     user.posts = (user.posts || []).filter(
@@ -193,10 +191,10 @@ export async function updatePost(
       return { error: "Not authorized" };
     }
 
-    const hoursSince =
-      (Date.now() - new Date(post.createdAt).getTime()) / 3600000;
-    if (hoursSince > 24) {
-      return { error: "Can only edit posts within 24 hours" };
+    // Can only edit posts from today
+    const today = getToday();
+    if (post.date !== today) {
+      return { error: "Can only edit today's post" };
     }
 
     if (updates.rating !== undefined) {
@@ -234,6 +232,54 @@ export async function updatePost(
     return { success: true };
   } catch (error) {
     console.error("Error updating post:", error);
+    return { error: "Something went wrong." };
+  }
+}
+
+/**
+ * Toggle bookmark on a post (add/remove from user's bookmarks array).
+ */
+export async function toggleBookmark(
+  postId: string
+): Promise<ActionResponse & { bookmarked?: boolean }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "You must be logged in" };
+    }
+
+    await dbConnect();
+
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    // Check the post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return { error: "Post not found" };
+    }
+
+    const bookmarks = user.bookmarks || [];
+    const idx = bookmarks.findIndex(
+      (b: any) => b.toString() === postId
+    );
+
+    if (idx >= 0) {
+      // Already bookmarked — remove it
+      bookmarks.splice(idx, 1);
+    } else {
+      // Not bookmarked — add it
+      bookmarks.push(post._id);
+    }
+
+    user.bookmarks = bookmarks;
+    await user.save();
+
+    return { success: true, bookmarked: idx < 0 };
+  } catch (error) {
+    console.error("Error toggling bookmark:", error);
     return { error: "Something went wrong." };
   }
 }

@@ -108,12 +108,10 @@ export default function RightSidebar({
 
   return (
     <div className="space-y-4">
-      {/* ===== Profile Card ===== */}
-      <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card overflow-hidden">
+      {/* ===== Profile Card — whole thing links to /profile ===== */}
+      <Link href="/profile" className="block bg-white rounded-2xl border border-warm-border/30 shadow-card overflow-hidden hover:shadow-md transition-shadow">
         {/* Cover */}
-        <Link href="/profile">
-          <div className="h-20" style={coverBg} />
-        </Link>
+        <div className="h-20" style={coverBg} />
 
         <div className="px-4 pb-4">
           {/* Avatar */}
@@ -128,7 +126,7 @@ export default function RightSidebar({
           {/* Name */}
           <div className="text-center mb-3">
             <h3 className="font-semibold text-warm-brown text-sm flex items-center justify-center gap-1.5">
-              Anonymous
+              {user.username}
             </h3>
             <div className="text-xs text-warm-gray flex items-center justify-center gap-1">
               @{user.username}
@@ -164,7 +162,7 @@ export default function RightSidebar({
             </div>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* ===== Rating Section ===== */}
       {user.postedToday && todaysPostData ? (

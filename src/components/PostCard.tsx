@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deletePost, updatePost } from "@/app/actions/posts";
-import { countryNameToEmoji, within24Hours } from "@/lib/utils";
+import { deletePost, updatePost, toggleBookmark } from "@/app/actions/posts";
+import { countryNameToEmoji } from "@/lib/utils";
 
 interface PostCardProps {
   post: {
@@ -24,6 +24,7 @@ interface PostCardProps {
     createdAt: string;
   };
   currentUserId: string;
+  isBookmarked?: boolean;
 }
 
 const RATING_COLORS: Record<number, string> = {
@@ -34,23 +35,20 @@ const RATING_COLORS: Record<number, string> = {
   5: "#2ECC71",
 };
 
-function timeAgo(dateStr: string): string {
-  try {
-    const ms = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(ms / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return mins + "m ago";
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return hrs + "h ago";
-    const days = Math.floor(hrs / 24);
-    if (days < 7) return days + "d ago";
-    return new Date(dateStr).toLocaleDateString();
-  } catch {
-    return "";
-  }
+const DEFAULT_AVATAR =
+  "https://res.cloudinary.com/dw3o86f8j/image/upload/v1634179812/t%27day/avatars/defaultAvatar2_qyqc9t.png";
+
+/** Check if the post date is today (same-day edit window) */
+function isSameDay(postDate: string): boolean {
+  const today = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return postDate === today;
 }
 
-export default function PostCard({ post, currentUserId }: PostCardProps) {
+export default function PostCard({ post, currentUserId, isBookmarked: initialBookmarked = false }: PostCardProps) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,12 +56,19 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
   const [editRating, setEditRating] = useState(post.rating);
   const [editBody, setEditBody] = useState(post.body || "");
   const [copied, setCopied] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(initialBookmarked);
+  const [bookmarking, setBookmarking] = useState(false);
 
   const isOwn = currentUserId === post.authorID;
-  const canEdit = isOwn && within24Hours(post.createdAt);
+  const canEdit = isOwn && isSameDay(post.date);
   const flag = countryNameToEmoji(post.authorCountry || "");
   const ratingColor = RATING_COLORS[post.rating] || RATING_COLORS[3];
+
+  const avatarUrl = post.authorAvatar
+    ? post.authorAvatar.includes("/upload")
+      ? post.authorAvatar.replace("/upload", "/upload/w_80,h_80,c_fill")
+      : post.authorAvatar
+    : DEFAULT_AVATAR;
 
   const handleDelete = async () => {
     try {
@@ -148,59 +153,79 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
 
   // ========== NORMAL VIEW ==========
   return (
-    <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card p-4 sm:p-5 mb-4">
-      {/* Header: avatar, name, flag, time, rating */}
+    <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card p-4 sm:p-5">
+      {/* Header: avatar, name, flag, date + stars */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           {/* Avatar */}
           <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-cream-dark">
-            {post.authorAvatar ? (
-              <img
-                src={post.authorAvatar.replace(
-                  "/upload",
-                  "/upload/w_80,h_80,c_fill"
-                )}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-warm-gray">
-                <i className="fas fa-user" />
-              </div>
-            )}
+            <img
+              src={avatarUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
           </div>
 
           <div className="min-w-0">
             {/* Name line */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-sm font-semibold text-warm-brown">
-                Anonymous
+                {isOwn ? post.authorUsername : "Anonymous"}
               </span>
               {flag && (
                 <span className="text-lg" title={post.authorCountry}>
                   {flag}
                 </span>
               )}
-              <span className="text-warm-border">·</span>
+            </div>
+
+            {/* Date + star rating + demographics */}
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
               <span className="text-xs text-warm-gray">
-                {timeAgo(post.createdAt)}
+                {post.date}:
+              </span>
+              <span className="flex gap-px">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span
+                    key={s}
+                    className="text-xs"
+                    style={{
+                      color:
+                        s <= post.rating
+                          ? ratingColor
+                          : "var(--color-warm-border)",
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
               </span>
               {post.edited && (
                 <>
                   <span className="text-warm-border">·</span>
-                  <span className="text-xs text-warm-gray italic">edited</span>
+                  <span className="text-[11px] text-warm-gray italic">edited</span>
+                </>
+              )}
+              {(post.authorGender || post.authorAgeGroup) && (
+                <>
+                  <span className="text-warm-border">·</span>
+                  {post.authorGender && (
+                    <span className="text-[11px] text-warm-gray/70">
+                      {post.authorGender.charAt(0).toUpperCase() +
+                        post.authorGender.slice(1)}
+                    </span>
+                  )}
+                  {post.authorGender && post.authorAgeGroup && (
+                    <span className="text-warm-border">·</span>
+                  )}
+                  {post.authorAgeGroup && (
+                    <span className="text-[11px] text-warm-gray/70">
+                      {post.authorAgeGroup}
+                    </span>
+                  )}
                 </>
               )}
             </div>
-
-            {/* Demographics */}
-            {(post.authorGender || post.authorAgeGroup) && (
-              <div className="flex gap-1.5 text-xs text-warm-gray/70 mt-0.5">
-                {post.authorGender && <span>{post.authorGender.charAt(0).toUpperCase() + post.authorGender.slice(1)}</span>}
-                {post.authorGender && post.authorAgeGroup && <span>·</span>}
-                {post.authorAgeGroup && <span>{post.authorAgeGroup}</span>}
-              </div>
-            )}
           </div>
         </div>
 
@@ -244,21 +269,6 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
             )}
           </div>
         )}
-      </div>
-
-      {/* Star rating */}
-      <div className="mb-3 flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <span
-            key={s}
-            className="text-sm"
-            style={{
-              color: s <= post.rating ? ratingColor : "var(--color-warm-border)",
-            }}
-          >
-            ★
-          </span>
-        ))}
       </div>
 
       {/* Body text */}
@@ -309,7 +319,25 @@ export default function PostCard({ post, currentUserId }: PostCardProps) {
 
         {/* Bookmark */}
         <button
-          onClick={() => setBookmarked(!bookmarked)}
+          onClick={async () => {
+            if (bookmarking) return;
+            setBookmarking(true);
+            // Optimistic update
+            setBookmarked(!bookmarked);
+            try {
+              const result = await toggleBookmark(post._id);
+              if (result.error) {
+                // Revert on error
+                setBookmarked(bookmarked);
+                console.error(result.error);
+              }
+            } catch (err) {
+              setBookmarked(bookmarked);
+              console.error("Bookmark failed:", err);
+            } finally {
+              setBookmarking(false);
+            }
+          }}
           className={
             "flex items-center gap-1.5 transition-colors " +
             (bookmarked ? "text-gold" : "hover:text-gold")

@@ -1,39 +1,21 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IComment } from '@/types';
+import mongoose, { Schema, Document } from "mongoose";
 
-// Comment document interface for Mongoose
-interface ICommentDocument extends IComment, Document {}
+export interface IComment extends Document {
+  body: string;
+  author: mongoose.Types.ObjectId;
+  post: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-// Main Comment schema
-const CommentSchema = new Schema<ICommentDocument>(
+const CommentSchema = new Schema<IComment>(
   {
-    body: {
-      type: String,
-      required: [true, 'Comment body is required'],
-    },
-    author: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Author is required'],
-    },
-    post: {
-      type: Schema.Types.ObjectId,
-      ref: 'Post',
-      required: [true, 'Post is required'],
-    },
+    body: { type: String },
+    author: { type: Schema.Types.ObjectId, ref: "User" },
+    post: { type: Schema.Types.ObjectId, ref: "Post" },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Indexes for performance
-CommentSchema.index({ post: 1 });
-CommentSchema.index({ author: 1 });
-CommentSchema.index({ createdAt: -1 });
-
-// Prevent recompilation in Next.js
-const Comment = mongoose.models.Comment || mongoose.model<ICommentDocument>('Comment', CommentSchema);
-
-export default Comment;
-export type { ICommentDocument };
+export default mongoose.models.Comment ||
+  mongoose.model<IComment>("Comment", CommentSchema);

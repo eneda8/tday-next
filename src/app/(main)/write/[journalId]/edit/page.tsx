@@ -20,20 +20,21 @@ export default async function JournalEditPage({ params }: EditPageProps) {
     notFound();
   }
 
-  const journal = await Journal.findById(journalId).lean();
+  // Do NOT use .lean() — decryption plugin requires Mongoose documents
+  const journal = await Journal.findById(journalId);
 
   if (!journal) {
     notFound();
   }
 
-  if ((journal as any).author.toString() !== session.user.id) {
+  if (journal.author.toString() !== session.user.id) {
     redirect("/home");
   }
 
   const serialized = {
-    _id: String((journal as any)._id),
-    title: (journal as any).title ? String((journal as any).title) : "",
-    body: String((journal as any).body || ""),
+    _id: String(journal._id),
+    title: journal.title ? String(journal.title) : "",
+    body: String(journal.body || ""),
   };
 
   return <JournalEditForm journal={serialized} />;

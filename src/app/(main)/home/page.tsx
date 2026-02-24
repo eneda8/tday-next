@@ -140,6 +140,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     date: today,
   }).lean();
 
+  // ===== User bookmarks as a set of string IDs for quick lookup =====
+  const userBookmarkIds = new Set(
+    (freshUser.bookmarks || []).map((b: any) => b.toString())
+  );
+
   // ===== Serialize =====
   const serializedPosts = posts.map(serializePost);
 
@@ -208,6 +213,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   key={post._id}
                   post={post}
                   currentUserId={userId}
+                  isBookmarked={userBookmarkIds.has(post._id)}
                 />
               ))
             ) : (

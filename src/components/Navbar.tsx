@@ -1,13 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import RateModal from "@/components/RateModal";
+import {
+  getUnreadCount,
+  getNotifications,
+  markAllRead,
+  markOneRead,
+} from "@/app/actions/notifications";
 
 interface NavbarProps {
   postedToday?: boolean;
+}
+
+interface NotificationItem {
+  _id: string;
+  type: string;
+  fromUsername: string;
+  postId: string | null;
+  postDate: string | null;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 export default function Navbar({ postedToday = false }: NavbarProps) {
@@ -16,11 +42,56 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showRateModal, setShowRateModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
     setSidebarOpen(false);
     setDropdownOpen(false);
   }, [pathname]);
+
+  // Poll for unread notification count
+  useEffect(() => {
+    let mounted = true;
+    const fetchCount = async () => {
+      try {
+        const count = await getUnreadCount();
+        if (mounted) setUnreadCount(count);
+      } catch { /* ignore */ }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => { mounted = false; clearInterval(interval); };
+  }, []);
+
+  // Fetch notifications when dropdown opens
+  useEffect(() => {
+    if (dropdownOpen) {
+      setNotifLoading(true);
+      getNotifications().then((n) => {
+        setNotifications(n as NotificationItem[]);
+        setNotifLoading(false);
+      });
+    }
+  }, [dropdownOpen]);
+
+  const handleMarkAllRead = useCallback(async () => {
+    await markAllRead();
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const handleNotifClick = useCallback(async (notif: NotificationItem) => {
+    if (!notif.read) {
+      await markOneRead(notif._id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+    setDropdownOpen(false);
+  }, []);
 
   // Desktop center nav links
   const navLinks = [
@@ -138,7 +209,7 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm text-warm-brown transition-colors hover:bg-cream-dark/50"
               >
-                <div className="h-7 w-7 overflow-hidden rounded-full bg-cream-dark">
+                <div className="relative h-7 w-7 overflow-hidden rounded-full bg-cream-dark">
                   {session?.user?.image ? (
                     <img
                       src={session.user.image}
@@ -149,6 +220,11 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
                     <div className="flex h-full w-full items-center justify-center text-xs text-warm-gray">
                       <i className="fas fa-user" />
                     </div>
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
                   )}
                 </div>
                 <span className="hidden max-w-[100px] truncate font-medium sm:inline">
@@ -168,29 +244,108 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border border-warm-border/40 bg-white py-1 shadow-lg">
-                    <Link
-                      href="/profile"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-warm-brown hover:bg-cream-light"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      <i className="fas fa-user-circle text-warm-gray" />{" "}
-                      Profile
-                    </Link>
-                    <Link
-                      href="/settings"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-warm-brown hover:bg-cream-light"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      <i className="fas fa-cog text-warm-gray" /> Settings
-                    </Link>
-                    <hr className="my-1 border-warm-border/30" />
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
-                    >
-                      <i className="fas fa-sign-out-alt" /> Sign Out
-                    </button>
+                  <div className="absolute right-0 z-50 mt-1 w-72 rounded-xl border border-warm-border/40 bg-white shadow-lg">
+                    {/* Profile & Settings */}
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-warm-brown hover:bg-cream-light"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <i className="fas fa-user-circle text-warm-gray" />{" "}
+                        Profile
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-warm-brown hover:bg-cream-light"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <i className="fas fa-cog text-warm-gray" /> Settings
+                      </Link>
+                    </div>
+
+                    {/* Notifications section */}
+                    <hr className="border-warm-border/30" />
+                    <div className="py-1">
+                      <div className="flex items-center justify-between px-3 py-1.5">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-warm-gray">
+                          Notifications
+                          {unreadCount > 0 && (
+                            <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </span>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-[11px] text-forest hover:text-forest-hover"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      {notifLoading ? (
+                        <div className="px-3 py-3 text-center text-xs text-warm-gray">
+                          Loading...
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="px-3 py-3 text-center text-xs text-warm-gray">
+                          No notifications yet
+                        </div>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto">
+                          {notifications.slice(0, 8).map((notif) => (
+                            <Link
+                              key={notif._id}
+                              href={notif.postId ? `/post/${notif.postId}` : "/notifications"}
+                              onClick={() => handleNotifClick(notif)}
+                              className={
+                                "flex gap-2.5 px-3 py-2 text-xs transition-colors hover:bg-cream-light " +
+                                (!notif.read ? "bg-forest/5" : "")
+                              }
+                            >
+                              {!notif.read && (
+                                <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-forest" />
+                              )}
+                              <div className={!notif.read ? "" : "pl-4"}>
+                                <p className={"text-warm-brown " + (!notif.read ? "font-semibold" : "")}>
+                                  <span className="text-forest">@{notif.fromUsername}</span>{" "}
+                                  commented on your post
+                                </p>
+                                <p className="mt-0.5 text-warm-gray line-clamp-1">
+                                  &ldquo;{notif.message}&rdquo;
+                                </p>
+                                <p className="mt-0.5 text-warm-gray/70">
+                                  {timeAgo(notif.createdAt)}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+
+                      <Link
+                        href="/notifications"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium text-forest hover:bg-cream-light"
+                      >
+                        See all notifications
+                        <i className="fas fa-arrow-right text-[9px]" />
+                      </Link>
+                    </div>
+
+                    {/* Sign out */}
+                    <hr className="border-warm-border/30" />
+                    <div className="py-1">
+                      <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
+                      >
+                        <i className="fas fa-sign-out-alt" /> Sign Out
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

@@ -193,5 +193,5 @@ UserSchema.statics.hashPassword = function (
   return { hash, salt };
 };
 
-export default mongoose.models.User ||
+export default (mongoose.models.User as IUserModel) ||
   mongoose.model<IUser, IUserModel>("User", UserSchema);

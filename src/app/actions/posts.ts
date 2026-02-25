@@ -17,13 +17,7 @@ async function getCloudinary() {
   return cloudinary;
 }
 
-function getToday(): string {
-  return new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { getToday } from "@/lib/postHelpers";
 
 /**
  * Create a new daily rating post.

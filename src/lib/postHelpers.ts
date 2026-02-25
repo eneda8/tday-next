@@ -4,7 +4,13 @@ import Post from "@/models/Post";
 import User from "@/models/User";
 
 /**
- * Get today's date string in the format used by the DB: "Feb 23, 2026"
+ * Get today's date string in the format used by the DB: "Feb 25, 2026"
+ *
+ * No fixed timezone — uses the server's local time intentionally.
+ * Users across all timezones sharing the same date string are aggregated
+ * together. A user in Tokyo and a user in NYC both rating "Feb 25" see
+ * each other's posts, because it IS Feb 25 for both of them locally.
+ * At midnight local time, posts roll into the next day.
  */
 export function getToday(): string {
   return new Date().toLocaleDateString("en-US", {

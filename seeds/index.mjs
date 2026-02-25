@@ -21,7 +21,7 @@ console.log("Database connected");
 
 // Import models inline (since we can't use @ aliases in standalone scripts)
 const UserSchema = new mongoose.Schema({}, { strict: false, collection: "users" });
-const PostSchema = new mongoose.Schema({}, { strict: false, collection: "posts" });
+const PostSchema = new mongoose.Schema({}, { strict: false, timestamps: true, collection: "posts" });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const Post = mongoose.models.Post || mongoose.model("Post", PostSchema);

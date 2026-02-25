@@ -5,6 +5,7 @@ import { dbConnect } from "@/lib/db";
 import Comment from "@/models/Comment";
 import Post from "@/models/Post";
 import User from "@/models/User";
+import Notification from "@/models/Notification";
 import { revalidatePath } from "next/cache";
 
 interface ActionResponse {
@@ -64,6 +65,23 @@ export async function addComment(
     user.comments = user.comments || [];
     user.comments.push(comment._id);
     await user.save();
+
+    // Create notification for the post author (if not commenting on own post)
+    if (post.author.toString() !== user._id.toString()) {
+      try {
+        await Notification.create({
+          recipient: post.author,
+          type: "comment",
+          fromUser: user._id,
+          fromUsername: user.username,
+          post: post._id,
+          postDate: post.date,
+          message: trimmed.length > 80 ? trimmed.slice(0, 80) + "..." : trimmed,
+        });
+      } catch (notifErr) {
+        console.error("Failed to create notification:", notifErr);
+      }
+    }
 
     return { success: true, commentId: comment._id.toString() };
   } catch (error) {

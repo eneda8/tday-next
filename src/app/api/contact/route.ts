@@ -11,20 +11,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If SendGrid is configured, send the email
-    if (process.env.SENDGRID_API_KEY && process.env.CONTACT_EMAIL) {
+    if (process.env.SENDGRID_API_KEY) {
       const sgMail = (await import("@sendgrid/mail")).default;
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+      // Send to support
       await sgMail.send({
-        to: process.env.CONTACT_EMAIL,
-        from: process.env.SENDGRID_FROM_EMAIL || process.env.CONTACT_EMAIL,
+        to: "support@tday.co",
+        from: "support@tday.co",
         replyTo: email,
-        subject: `[t'day Contact] ${subject}`,
-        text: `From: ${email}\nSubject: ${subject}\n\n${message}`,
+        subject: `Message from ${email} re: ${subject}`,
+        text: message,
+      });
+
+      // Send confirmation to user
+      await sgMail.send({
+        to: email,
+        from: "noreply@tday.co",
+        subject: "We've received your message",
+        html: `<p>Hi there,</p>
+        <p>Thanks for reaching out to t'day! We've received your message regarding <strong>${subject}</strong> and will get back to you within 24 hours.</p>
+        <p>Best,<br/>The t'day Team</p>`,
       });
     } else {
-      // Log to server console when SendGrid is not configured
       console.log("=== Contact Form Submission ===");
       console.log("From:", email);
       console.log("Subject:", subject);

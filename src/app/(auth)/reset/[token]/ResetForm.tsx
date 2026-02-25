@@ -2,26 +2,42 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { requestPasswordReset } from "@/app/actions/password-reset";
+import { resetPassword } from "@/app/actions/password-reset";
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
+interface ResetFormProps {
+  token: string;
+}
+
+export default function ResetForm({ token }: ResetFormProps) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSending(true);
     setError("");
 
-    const result = await requestPasswordReset(email);
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const result = await resetPassword(token, password, confirm);
 
     if (result.error) {
       setError(result.error);
-      setSending(false);
+      setSubmitting(false);
     } else {
-      setSubmitted(true);
+      setSuccess(true);
     }
   };
 
@@ -35,44 +51,59 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card p-8">
-          {submitted ? (
+          {success ? (
             <div className="text-center">
-              <i className="fas fa-envelope text-3xl text-forest mb-4 block" />
+              <i className="fas fa-check-circle text-3xl text-forest mb-4 block" />
               <h1 className="text-lg font-semibold text-warm-brown mb-2">
-                Check your email
+                Password reset!
               </h1>
               <p className="text-sm text-warm-gray mb-6">
-                If an account exists with that email, we&apos;ll send password
-                reset instructions shortly.
+                Your password has been changed successfully. You can now log in
+                with your new password.
               </p>
               <Link
                 href="/login"
-                className="text-sm text-forest hover:text-forest-hover"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-forest hover:bg-forest-hover text-cream-light font-medium rounded-xl transition-colors text-sm"
               >
-                Back to login
+                Log in
               </Link>
             </div>
           ) : (
             <>
               <h1 className="text-lg font-semibold text-warm-brown mb-1 text-center">
-                Reset your password
+                Set new password
               </h1>
               <p className="text-sm text-warm-gray mb-6 text-center">
-                Enter the email address associated with your account.
+                Enter your new password below.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-warm-brown mb-1">
-                    Email
+                    New password
                   </label>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className="w-full rounded-xl border border-warm-border/40 bg-cream-light/50 px-4 py-2.5 text-sm text-warm-brown focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest/30"
+                    placeholder="At least 8 characters"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-warm-brown mb-1">
+                    Confirm password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
                     required
                     className="w-full rounded-xl border border-warm-border/40 bg-cream-light/50 px-4 py-2.5 text-sm text-warm-brown focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest/30"
-                    placeholder="you@example.com"
+                    placeholder="Confirm your password"
                   />
                 </div>
 
@@ -84,10 +115,10 @@ export default function ForgotPasswordPage() {
 
                 <button
                   type="submit"
-                  disabled={sending}
+                  disabled={submitting}
                   className="w-full rounded-xl bg-forest py-2.5 text-sm font-medium text-cream-light hover:bg-forest-hover transition-colors disabled:opacity-50"
                 >
-                  {sending ? "Sending..." : "Send reset link"}
+                  {submitting ? "Resetting..." : "Reset password"}
                 </button>
               </form>
 

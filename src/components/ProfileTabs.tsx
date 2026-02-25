@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import PostCard from "@/components/PostCard";
 import { deleteComment } from "@/app/actions/comments";
 
-type Tab = "ratings" | "comments" | "bookmarks" | "journals";
+type Tab = "ratings" | "comments" | "bookmarks";
 
 interface SerializedPost {
   _id: string;
@@ -37,21 +37,11 @@ interface SerializedComment {
   createdAt: string;
 }
 
-interface SerializedJournal {
-  _id: string;
-  date: string;
-  title: string;
-  body: string;
-  edited: boolean;
-  createdAt: string;
-}
-
 interface ProfileTabsProps {
   currentUserId: string;
   posts: SerializedPost[];
   comments: SerializedComment[];
   bookmarks: SerializedPost[];
-  journals: SerializedJournal[];
 }
 
 const RATING_COLORS: Record<number, string> = {
@@ -67,13 +57,9 @@ export default function ProfileTabs({
   posts,
   comments,
   bookmarks,
-  journals,
 }: ProfileTabsProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("ratings");
-  const [expandedJournals, setExpandedJournals] = useState<Set<string>>(
-    new Set()
-  );
   const [deletingComment, setDeletingComment] = useState<string | null>(null);
   const [confirmDeleteComment, setConfirmDeleteComment] = useState<string | null>(null);
 
@@ -91,30 +77,7 @@ export default function ProfileTabs({
       icon: "fas fa-bookmark",
       count: bookmarks.length,
     },
-    {
-      id: "journals",
-      label: "Journals",
-      icon: "fas fa-book",
-      count: journals.length,
-    },
   ];
-
-  const toggleJournal = (id: string) => {
-    setExpandedJournals((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const expandAll = () => {
-    setExpandedJournals(new Set(journals.map((j) => j._id)));
-  };
-
-  const collapseAll = () => {
-    setExpandedJournals(new Set());
-  };
 
   const handleDeleteComment = async (commentId: string) => {
     setDeletingComment(commentId);
@@ -318,112 +281,6 @@ export default function ProfileTabs({
           </div>
         )}
 
-        {/* ===== Journals ===== */}
-        {tab === "journals" && (
-          <div>
-            {/* Actions */}
-            <div className="flex items-center justify-between mb-4">
-              <Link
-                href="/write"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-forest hover:bg-forest-hover text-cream-light text-sm font-medium rounded-xl transition-colors"
-              >
-                <i className="fas fa-pen-to-square text-xs" />
-                New Entry
-              </Link>
-              {journals.length > 1 && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={expandAll}
-                    className="text-xs text-forest hover:text-forest-hover"
-                  >
-                    Expand all
-                  </button>
-                  <span className="text-warm-gray text-xs">|</span>
-                  <button
-                    onClick={collapseAll}
-                    className="text-xs text-forest hover:text-forest-hover"
-                  >
-                    Collapse all
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {journals.length > 0 ? (
-              <div className="space-y-2">
-                {journals.map((journal) => {
-                  const isExpanded = expandedJournals.has(journal._id);
-                  return (
-                    <div
-                      key={journal._id}
-                      className="bg-white rounded-2xl border border-warm-border/30 shadow-card overflow-hidden"
-                    >
-                      {/* Accordion header */}
-                      <button
-                        onClick={() => toggleJournal(journal._id)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-cream-light/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <i
-                            className={
-                              "fas fa-chevron-right text-[10px] text-warm-gray transition-transform " +
-                              (isExpanded ? "rotate-90" : "")
-                            }
-                          />
-                          <span className="text-sm font-medium text-warm-brown truncate">
-                            {journal.title || journal.date}
-                          </span>
-                          {journal.edited && (
-                            <span className="text-[10px] text-warm-gray italic">
-                              edited
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[11px] text-warm-gray flex-shrink-0 ml-2">
-                          {journal.date}
-                        </span>
-                      </button>
-
-                      {/* Accordion body */}
-                      {isExpanded && (
-                        <div className="border-t border-warm-border/20 px-4 py-4">
-                          <div
-                            className="text-sm text-warm-brown font-mono leading-relaxed mb-3"
-                            style={{ whiteSpace: "pre-wrap" }}
-                          >
-                            {journal.body}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href={"/write/" + journal._id}
-                              className="text-xs text-forest hover:text-forest-hover"
-                            >
-                              <i className="fas fa-external-link-alt mr-1" />
-                              View
-                            </Link>
-                            <Link
-                              href={"/write/" + journal._id + "/edit"}
-                              className="text-xs text-gold-hover hover:text-gold"
-                            >
-                              <i className="fas fa-pen mr-1" />
-                              Edit
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <EmptyState
-                icon="fas fa-book"
-                message="No journal entries yet."
-                action={{ href: "/write", label: "Start writing" }}
-              />
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

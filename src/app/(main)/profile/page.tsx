@@ -3,7 +3,6 @@ import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
 import Post from "@/models/Post";
 import Comment from "@/models/Comment";
-import Journal from "@/models/Journal";
 import ProfileHeader from "@/components/ProfileHeader";
 import ProfileTabs from "@/components/ProfileTabs";
 import ProfileCharts from "@/components/ProfileCharts";
@@ -129,18 +128,6 @@ export default async function ProfilePage() {
     console.error("Error fetching bookmarks:", err);
   }
 
-  // ===== Fetch journals (NO .lean() — decryption needs Mongoose docs) =====
-  let journals: any[] = [];
-  try {
-    if (user.journals && user.journals.length > 0) {
-      const rawJournals = await Journal.find({ _id: { $in: user.journals } })
-        .sort({ createdAt: -1 });
-      journals = rawJournals.map((j) => j.toObject());
-    }
-  } catch (err) {
-    console.error("Error fetching journals:", err);
-  }
-
   // ===== Serialize =====
   const userInfo = {
     avatar: String(user.avatar?.path || ""),
@@ -165,17 +152,6 @@ export default async function ProfilePage() {
   }));
 
   const serializedBookmarks = bookmarks.map((p) => serializePost(p));
-
-  const serializedJournals = journals.map((j: any) => ({
-    _id: String(j._id),
-    date: String(j.date || ""),
-    title: j.title ? String(j.title) : "",
-    body: String(j.body || ""),
-    edited: Boolean(j.edited),
-    createdAt: j.createdAt
-      ? new Date(j.createdAt).toISOString()
-      : new Date().toISOString(),
-  }));
 
   const memberSince = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -218,7 +194,6 @@ export default async function ProfilePage() {
             posts={serializedPosts}
             comments={serializedComments}
             bookmarks={serializedBookmarks}
-            journals={serializedJournals}
           />
         </div>
 

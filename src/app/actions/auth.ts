@@ -3,6 +3,7 @@
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
 import crypto from "crypto";
+import { sendVerificationEmail } from "@/lib/sendgrid";
 
 interface RegisterUserInput {
   username: string;
@@ -102,6 +103,19 @@ export async function registerUser(
     });
 
     await newUser.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(
+        newUser.email,
+        verifyEmailToken,
+        newUser.username
+      );
+    } catch (emailErr) {
+      console.error("Failed to send verification email:", emailErr);
+      // Don't fail registration if email fails
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error in registerUser:", error);

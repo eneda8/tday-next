@@ -6,15 +6,15 @@ import Post from "@/models/Post";
 import User from "@/models/User";
 import { revalidatePath } from "next/cache";
 
-interface CreatePostInput {
-  rating: number;
-  body?: string;
-}
-
 interface ActionResponse {
   success?: boolean;
   error?: string;
   postId?: string;
+}
+
+async function getCloudinary() {
+  const { default: cloudinary } = await import("@/lib/cloudinary");
+  return cloudinary;
 }
 
 function getToday(): string {
@@ -27,9 +27,10 @@ function getToday(): string {
 
 /**
  * Create a new daily rating post.
+ * Accepts either a plain object or FormData (when image is included).
  */
 export async function createPost(
-  input: CreatePostInput
+  input: { rating: number; body?: string } | FormData
 ): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -37,7 +38,20 @@ export async function createPost(
       return { error: "You must be logged in" };
     }
 
-    if (!input.rating || input.rating < 1 || input.rating > 5) {
+    let rating: number;
+    let body: string | undefined;
+    let imageData: string | null = null;
+
+    if (input instanceof FormData) {
+      rating = Number(input.get("rating"));
+      body = (input.get("body") as string) || undefined;
+      imageData = (input.get("image") as string) || null;
+    } else {
+      rating = input.rating;
+      body = input.body;
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
       return { error: "Rating must be between 1 and 5" };
     }
 
@@ -57,10 +71,29 @@ export async function createPost(
       };
     }
 
+    // Upload image to Cloudinary if provided
+    let image: { path: string; filename: string } | undefined;
+    if (imageData) {
+      try {
+        const cloudinary = await getCloudinary();
+        const result = await cloudinary.uploader.upload(imageData, {
+          folder: "t'day",
+        });
+        image = {
+          path: result.secure_url,
+          filename: result.public_id,
+        };
+      } catch (uploadErr) {
+        console.error("Image upload failed:", uploadErr);
+        return { error: "Image upload failed. Please try again." };
+      }
+    }
+
     const post = new Post({
       date: today,
-      rating: input.rating,
-      body: input.body || "",
+      rating,
+      body: body || "",
+      image,
       author: user._id,
       authorUsername: user.username,
       authorCountry: user.country?.name || "",
@@ -133,6 +166,16 @@ export async function deletePost(postId: string): Promise<ActionResponse> {
     }
 
     const isTodays = true;
+
+    // Delete post image from Cloudinary if it has one
+    if (post.image?.filename) {
+      try {
+        const cloudinary = await getCloudinary();
+        await cloudinary.uploader.destroy(post.image.filename);
+      } catch (imgErr) {
+        console.error("Failed to delete post image:", imgErr);
+      }
+    }
 
     // Remove post reference from user
     user.posts = (user.posts || []).filter(

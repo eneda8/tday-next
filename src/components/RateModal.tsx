@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createPost } from "@/app/actions/posts";
 import { useRouter } from "next/navigation";
 
@@ -18,10 +18,37 @@ const FACE_ICONS = [
 
 export default function RateModal({ onClose }: RateModalProps) {
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageData, setImageData] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState("");
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image must be under 10MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImagePreview(base64);
+      setImageData(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setImageData(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +57,20 @@ export default function RateModal({ onClose }: RateModalProps) {
     setIsPosting(true);
     setError("");
     try {
-      const result = await createPost({
-        rating,
-        body: body.trim() || undefined,
-      });
+      let result;
+      if (imageData) {
+        const formData = new FormData();
+        formData.set("rating", String(rating));
+        formData.set("body", body.trim());
+        formData.set("image", imageData);
+        result = await createPost(formData);
+      } else {
+        result = await createPost({
+          rating,
+          body: body.trim() || undefined,
+        });
+      }
+
       if (result.success) {
         router.refresh();
         onClose();
@@ -54,7 +91,7 @@ export default function RateModal({ onClose }: RateModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full"
+        className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -108,9 +145,45 @@ export default function RateModal({ onClose }: RateModalProps) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Jot down your thoughts (optional)..."
-            className="w-full px-3 py-2 text-sm border border-warm-border/40 rounded-lg mb-4 resize-none bg-cream-light text-warm-brown placeholder-warm-gray/60 focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full px-3 py-2 text-sm border border-warm-border/40 rounded-lg mb-3 resize-none bg-cream-light text-warm-brown placeholder-warm-gray/60 focus:outline-none focus:ring-2 focus:ring-forest/30"
             rows={3}
           />
+
+          {/* Image upload */}
+          <div className="mb-4">
+            {imagePreview ? (
+              <div className="relative rounded-lg overflow-hidden">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full max-h-48 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <i className="fas fa-times text-xs" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-warm-border/50 rounded-lg text-sm text-warm-gray hover:text-forest hover:border-forest/40 transition-colors"
+              >
+                <i className="fas fa-image text-xs" />
+                Add a photo
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,image/gif"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
 
           {/* Error message */}
           {error && (

@@ -22,6 +22,7 @@ export interface ICountry {
 export interface ICoverPhoto {
   path?: string;
   filename?: string;
+  position?: string;
 }
 
 // Image interface for post image sub-document

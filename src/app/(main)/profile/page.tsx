@@ -190,6 +190,7 @@ export default async function ProfilePage() {
     country: String(user.country?.name || ""),
     coverColor: String(user.coverColor || "#343a40"),
     coverPhoto: String(user.coverPhoto?.path || ""),
+    coverPhotoPosition: user.coverPhoto?.position ? `${user.coverPhoto.position}` : undefined,
     bio: String(user.bio || ""),
     totalPosts: Number(user.posts?.length || 0),
     totalComments: Number(comments.length || 0),

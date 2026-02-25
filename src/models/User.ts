@@ -23,6 +23,7 @@ export interface IUser extends Document {
   coverPhoto?: {
     path: string;
     filename: string;
+    position?: string;
   };
   posts?: mongoose.Types.ObjectId[];
   comments?: mongoose.Types.ObjectId[];
@@ -96,6 +97,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
     coverPhoto: {
       path: String,
       filename: String,
+      position: String,
     },
     posts: [
       {

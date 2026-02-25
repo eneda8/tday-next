@@ -156,3 +156,50 @@ export const contactSchema = z.object({
 });
 
 export type ContactSchema = z.infer<typeof contactSchema>;
+
+// Settings schemas
+export const settingsProfileSchema = z.object({
+  bio: z
+    .string()
+    .max(500, "Bio must be less than 500 characters")
+    .optional()
+    .transform((val) => (val ? sanitizeInput(val) : "")),
+  coverColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Invalid color")
+    .optional(),
+});
+
+export type SettingsProfileSchema = z.infer<typeof settingsProfileSchema>;
+
+export const settingsAccountSchema = z.object({
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(16, "Username must be at most 16 characters")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+    .optional(),
+  email: z.string().email("Invalid email address").optional(),
+  countryName: z.string().optional(),
+});
+
+export type SettingsAccountSchema = z.infer<typeof settingsAccountSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password must be less than 100 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;

@@ -9,6 +9,7 @@ interface ProfileHeaderProps {
     country: string;
     coverColor: string;
     coverPhoto: string;
+    coverPhotoPosition?: string;
     bio: string;
     totalPosts: number;
     totalComments: number;
@@ -35,8 +36,8 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
   const coverBg = user.coverPhoto
     ? {
         backgroundImage: "url(" + user.coverPhoto + ")",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundSize: "cover" as const,
+        backgroundPosition: user.coverPhotoPosition || "center",
       }
     : { backgroundColor: user.coverColor || "#2D5F3F" };
 

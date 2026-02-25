@@ -14,6 +14,7 @@ interface RightSidebarProps {
     country: string;
     coverColor: string;
     coverPhoto: string;
+    coverPhotoPosition?: string;
     postedToday: boolean;
     todaysPost: string;
     totalPosts: number;
@@ -71,7 +72,7 @@ export default function RightSidebar({
     : DEFAULT_AVATAR;
 
   const coverBg = user.coverPhoto
-    ? { backgroundImage: "url(" + user.coverPhoto + ")", backgroundSize: "cover", backgroundPosition: "center" }
+    ? { backgroundImage: "url(" + user.coverPhoto + ")", backgroundSize: "cover" as const, backgroundPosition: user.coverPhotoPosition || "center" }
     : { backgroundColor: user.coverColor || "#2D5F3F" };
 
   const handleSubmit = async (e: React.FormEvent) => {

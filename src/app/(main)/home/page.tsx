@@ -170,6 +170,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     country: String(freshUser.country?.name || ""),
     coverColor: String(freshUser.coverColor || "#343a40"),
     coverPhoto: String(freshUser.coverPhoto?.path || ""),
+    coverPhotoPosition: freshUser.coverPhoto?.position ? `${freshUser.coverPhoto.position}` : undefined,
     postedToday: Boolean(freshUser.postedToday),
     todaysPost: String(freshUser.todaysPost || ""),
     totalPosts: Number(freshUser.posts?.length || 0),

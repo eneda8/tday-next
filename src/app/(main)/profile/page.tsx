@@ -57,7 +57,13 @@ function serializePost(post: any, authorInfo?: any) {
   };
 }
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
+
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -194,6 +200,7 @@ export default async function ProfilePage() {
             posts={serializedPosts}
             comments={serializedComments}
             bookmarks={serializedBookmarks}
+            defaultTab={tab as "ratings" | "comments" | "bookmarks" | undefined}
           />
         </div>
 

@@ -42,6 +42,7 @@ interface ProfileTabsProps {
   posts: SerializedPost[];
   comments: SerializedComment[];
   bookmarks: SerializedPost[];
+  defaultTab?: Tab;
 }
 
 const RATING_COLORS: Record<number, string> = {
@@ -52,14 +53,18 @@ const RATING_COLORS: Record<number, string> = {
   5: "#2ECC71",
 };
 
+const VALID_TABS: Tab[] = ["ratings", "comments", "bookmarks"];
+
 export default function ProfileTabs({
   currentUserId,
   posts,
   comments,
   bookmarks,
+  defaultTab,
 }: ProfileTabsProps) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("ratings");
+  const initial = defaultTab && VALID_TABS.includes(defaultTab) ? defaultTab : "ratings";
+  const [tab, setTab] = useState<Tab>(initial);
   const [deletingComment, setDeletingComment] = useState<string | null>(null);
   const [confirmDeleteComment, setConfirmDeleteComment] = useState<string | null>(null);
 

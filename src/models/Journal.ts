@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from "mongoose";
-// @ts-expect-error — no types for mongoose-field-encryption
 import { fieldEncryption } from "mongoose-field-encryption";
 
 export interface IJournal extends Document {

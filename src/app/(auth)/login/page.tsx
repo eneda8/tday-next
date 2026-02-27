@@ -37,9 +37,30 @@ export default function LoginPage() {
     }
   }
 
-  function fillDemo() {
+  async function fillDemo() {
     setUsername("demo");
     setPassword("Demo123!");
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        username: "demo",
+        password: "Demo123!",
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        router.push("/home");
+        router.refresh();
+      }
+    } catch {
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

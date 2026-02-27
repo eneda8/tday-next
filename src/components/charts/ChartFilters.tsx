@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { countries } from "@/lib/countries";
 
 const AGE_GROUPS = [
@@ -18,51 +17,48 @@ const GENDERS = [
   { value: "female", label: "Female" },
 ];
 
+export interface FilterState {
+  country: string;
+  ageGroup: string;
+  gender: string;
+  date: string;
+}
+
 interface ChartFiltersProps {
-  basePath: string; // e.g. "/charts" or "/charts/all"
   showDatePicker?: boolean;
+  /** Called whenever a filter value changes. Charts update live. */
+  onChange: (filters: FilterState) => void;
 }
 
 export default function ChartFilters({
-  basePath,
   showDatePicker = false,
+  onChange,
 }: ChartFiltersProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [open, setOpen] = useState(
-    searchParams.has("country") ||
-      searchParams.has("ageGroup") ||
-      searchParams.has("gender") ||
-      searchParams.has("date")
-  );
-
-  const [country, setCountry] = useState(searchParams.get("country") || "");
-  const [ageGroup, setAgeGroup] = useState(searchParams.get("ageGroup") || "");
-  const [gender, setGender] = useState(searchParams.get("gender") || "");
-  const [date, setDate] = useState(searchParams.get("date") || "");
+  const [open, setOpen] = useState(false);
+  const [country, setCountry] = useState("");
+  const [ageGroup, setAgeGroup] = useState("");
+  const [gender, setGender] = useState("");
+  const [date, setDate] = useState("");
 
   const hasActiveFilters = country || ageGroup || gender || date;
 
-  const applyFilters = () => {
-    const params = new URLSearchParams();
-    if (country) params.set("country", country);
-    if (ageGroup) params.set("ageGroup", ageGroup);
-    if (gender) params.set("gender", gender);
-    if (date) params.set("date", date);
-
-    const qs = params.toString();
-    router.push(basePath + (qs ? "?" + qs : ""));
-  };
+  // Notify parent on every change — charts update instantly
+  useEffect(() => {
+    onChange({ country, ageGroup, gender, date });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country, ageGroup, gender, date]);
 
   const clearFilters = () => {
     setCountry("");
     setAgeGroup("");
     setGender("");
     setDate("");
-    router.push(basePath);
   };
 
   const todayISO = new Date().toISOString().split("T")[0];
+
+  const selectClass =
+    "w-full text-sm border border-warm-border/40 rounded-lg px-2 py-1.5 bg-cream-light text-warm-brown focus:outline-none focus:ring-2 focus:ring-forest/30";
 
   return (
     <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card overflow-hidden">
@@ -101,7 +97,7 @@ export default function ChartFilters({
                 value={date}
                 max={todayISO}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full text-sm border border-warm-border/40 rounded-lg px-2 py-1.5 bg-cream-light text-warm-brown focus:outline-none focus:ring-2 focus:ring-forest/30"
+                className={selectClass}
               />
             </div>
           )}
@@ -115,7 +111,7 @@ export default function ChartFilters({
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="w-full text-sm border border-warm-border/40 rounded-lg px-2 py-1.5 bg-cream-light text-warm-brown focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className={selectClass}
             >
               <option value="">Global</option>
               {countries.map((c) => (
@@ -135,7 +131,7 @@ export default function ChartFilters({
             <select
               value={ageGroup}
               onChange={(e) => setAgeGroup(e.target.value)}
-              className="w-full text-sm border border-warm-border/40 rounded-lg px-2 py-1.5 bg-cream-light text-warm-brown focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className={selectClass}
             >
               <option value="">All Ages</option>
               {AGE_GROUPS.map((a) => (
@@ -155,7 +151,7 @@ export default function ChartFilters({
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-              className="w-full text-sm border border-warm-border/40 rounded-lg px-2 py-1.5 bg-cream-light text-warm-brown focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className={selectClass}
             >
               <option value="">All Genders</option>
               {GENDERS.map((g) => (
@@ -166,23 +162,15 @@ export default function ChartFilters({
             </select>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-1">
+          {/* Clear */}
+          {hasActiveFilters && (
             <button
-              onClick={applyFilters}
-              className="flex-1 bg-forest text-cream-light text-sm font-medium py-2 rounded-lg hover:bg-forest-hover transition-colors"
+              onClick={clearFilters}
+              className="w-full px-4 py-2 bg-cream-dark text-warm-brown text-sm rounded-lg hover:bg-warm-border/40 transition-colors"
             >
-              Filter charts
+              Clear filters
             </button>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="px-4 bg-cream-dark text-warm-brown text-sm rounded-lg hover:bg-warm-border/40 transition-colors"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          )}
         </div>
       )}
     </div>

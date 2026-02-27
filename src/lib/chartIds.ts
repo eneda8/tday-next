@@ -1,10 +1,10 @@
 /**
- * MongoDB Charts embed IDs — single source of truth.
- * Base URL: https://charts.mongodb.com/charts-todai-fevei/embed/charts
+ * MongoDB Charts — single source of truth.
+ * SDK base URL (no /embed/charts suffix).
  */
 
 export const CHARTS_BASE_URL =
-  "https://charts.mongodb.com/charts-todai-fevei/embed/charts";
+  "https://charts.mongodb.com/charts-todai-fevei";
 
 export interface ChartDef {
   id: string;

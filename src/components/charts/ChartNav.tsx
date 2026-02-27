@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 interface ChartNavProps {
-  current: "today" | "all" | "me";
+  current: "today" | "all" | "me" | "explore";
 }
 
 const LINKS = [
   { key: "today", href: "/charts", label: "Today's Charts" },
   { key: "all", href: "/charts/all", label: "All Charts" },
   { key: "me", href: "/charts/me", label: "My Charts" },
+  { key: "explore", href: "/charts/explore", label: "Explore" },
 ] as const;
 
 export default function ChartNav({ current }: ChartNavProps) {

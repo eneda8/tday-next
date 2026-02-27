@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPost } from "@/app/actions/posts";
 import { countryNameToEmoji } from "@/lib/utils";
+import ChartEmbed from "@/components/charts/ChartEmbed";
 
 interface RightSidebarProps {
   user: {
@@ -28,9 +29,6 @@ interface RightSidebarProps {
     body?: string;
   } | null;
 }
-
-const CHARTS_BASE =
-  "https://charts.mongodb.com/charts-todai-fevei/embed/charts";
 
 const FACE_ICONS = [
   { value: 1, icon: "fa-face-sad-cry", color: "#E74C3C" },
@@ -283,21 +281,13 @@ export default function RightSidebar({
 
       {/* ===== My Week Chart ===== */}
       <div className="bg-white rounded-2xl border border-warm-border/30 shadow-card overflow-hidden">
-        <div className="p-1" style={{ pointerEvents: "none" }}>
-          <iframe
-            src={`${CHARTS_BASE}?id=3e56620a-ac24-464e-9793-3f5065281e6f&maxDataAge=3600&autoRefresh=true&theme=light&filter=${encodeURIComponent(`{'authorID':'${user._id}'}`)}`}
-            width="100%"
-            height={180}
-            scrolling="no"
-            style={{
-              border: "none",
-              borderRadius: "12px",
-              display: "block",
-              background: "transparent",
-            }}
-            title="My Week"
-          />
-        </div>
+        <ChartEmbed
+          chartId="3e56620a-ac24-464e-9793-3f5065281e6f"
+          height={180}
+          maxDataAge={3600}
+          filter={{ authorID: user._id }}
+          bare
+        />
         <div className="px-3 pb-3">
           <Link
             href="/charts/me"

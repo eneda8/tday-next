@@ -1,6 +1,6 @@
 "use client";
 
-const CHART_BASE = "https://charts.mongodb.com/charts-todai-fevei/embed/charts";
+import ChartEmbed from "@/components/charts/ChartEmbed";
 
 const CHARTS = [
   { id: "3e56620a-ac24-464e-9793-3f5065281e6f", label: "My Week" },
@@ -10,10 +10,13 @@ const CHARTS = [
 ];
 
 interface ProfileChartsProps {
-  chartFilter: string;
+  /** The user's MongoDB _id string, used to filter charts to their data. */
+  userId: string;
 }
 
-export default function ProfileCharts({ chartFilter }: ProfileChartsProps) {
+export default function ProfileCharts({ userId }: ProfileChartsProps) {
+  const filter = { authorID: userId };
+
   return (
     <div>
       {/* Heading */}
@@ -24,21 +27,13 @@ export default function ProfileCharts({ chartFilter }: ProfileChartsProps) {
 
       <div className="space-y-3">
         {CHARTS.map((chart) => (
-          <div
+          <ChartEmbed
             key={chart.id}
-            className="bg-white rounded-xl border border-warm-border/30 shadow-card overflow-hidden"
-          >
-            <iframe
-              style={{
-                background: "#FFFFFF",
-                border: "none",
-                borderRadius: "8px",
-              }}
-              width="100%"
-              height="260"
-              src={`${CHART_BASE}?id=${chart.id}&filter=${chartFilter}&maxDataAge=300&theme=light&autoRefresh=true`}
-            />
-          </div>
+            chartId={chart.id}
+            height={260}
+            maxDataAge={300}
+            filter={filter}
+          />
         ))}
         <a
           href="/charts/me"

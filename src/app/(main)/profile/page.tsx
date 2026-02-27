@@ -183,8 +183,6 @@ export default async function ProfilePage({
     isOwnProfile: true,
   };
 
-  const chartFilter = encodeURIComponent(`{'authorID':'${userId}'}`);
-
   // ===== Render: header full-width, then 2-column (tabs left, charts right) =====
   return (
     <div className="mx-auto max-w-5xl px-4 py-4">
@@ -206,7 +204,7 @@ export default async function ProfilePage({
 
         {/* Right sidebar: charts — takes remaining space */}
         <div className="hidden lg:block flex-1 min-w-0">
-          <ProfileCharts chartFilter={chartFilter} />
+          <ProfileCharts userId={userId} />
         </div>
       </div>
     </div>

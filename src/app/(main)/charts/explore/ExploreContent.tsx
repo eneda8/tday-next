@@ -222,7 +222,7 @@ export default function ExploreContent() {
                 borderRadius: "12px",
                 fontSize: "13px",
               }}
-              formatter={(value: number) => [value.toFixed(2), "Avg Rating"]}
+              formatter={(value) => [Number(value).toFixed(2), "Avg Rating"]}
             />
             <Line
               type="monotone"
@@ -251,7 +251,7 @@ export default function ExploreContent() {
                 cx="50%"
                 cy="50%"
                 outerRadius={140}
-                label={({ name, count }) => `${name}: ${count}`}
+                label={({ name, value }) => `${name}: ${value}`}
                 labelLine={{ stroke: "#8B7E6F" }}
               >
                 {distData.map((entry) => (
@@ -369,7 +369,7 @@ export default function ExploreContent() {
                 borderRadius: "12px",
                 fontSize: "13px",
               }}
-              formatter={(value: number) => [value.toFixed(2), "Avg Rating"]}
+              formatter={(value) => [Number(value).toFixed(2), "Avg Rating"]}
             />
             <Line
               type="monotone"
@@ -408,10 +408,11 @@ export default function ExploreContent() {
               borderRadius: "12px",
               fontSize: "13px",
             }}
-            formatter={(value: number, _: string, props: { payload: DataPoint }) => [
-              `${value.toFixed(2)} (${props.payload.count} ratings)`,
-              "Avg Rating",
-            ]}
+            formatter={(value, _, props) => {
+              const v = Number(value);
+              const p = props as unknown as { payload: DataPoint };
+              return [`${v.toFixed(2)} (${p.payload.count} ratings)`, "Avg Rating"];
+            }}
           />
           <Bar dataKey="value" name="Avg Rating" radius={[0, 6, 6, 0]}>
             {breakdownData.map((_, i) => (

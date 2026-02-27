@@ -13,16 +13,14 @@ export default async function Home() {
             ======================== */}
         <section className="text-center">
           {/* Logo — t'day with blinking cursor aligned to baseline */}
-          <h1 className="mb-4 flex items-end justify-center text-5xl sm:text-6xl md:text-7xl">
+          <h1 className="mb-4 inline-flex items-stretch justify-center text-5xl sm:text-6xl md:text-7xl" style={{ lineHeight: "1" }}>
             <span className="font-logo font-semibold text-gold">
               t&apos;day
             </span>
             <span
-              className="blinking-cursor ml-1"
-              style={{ fontSize: "0.8em", lineHeight: "1" }}
-            >
-              |
-            </span>
+              className="blinking-cursor ml-1.5 rounded-sm bg-forest self-stretch"
+              style={{ width: "3px" }}
+            />
           </h1>
 
           {/* Tagline */}
@@ -65,7 +63,7 @@ export default async function Home() {
         {/* ========================
             PREVIEW — What the app looks like
             ======================== */}
-        <section className="mt-16 w-full sm:mt-20">
+        <section className="mt-8 w-full sm:mt-10">
           <div className="paper-card px-6 py-6 sm:px-8">
             {/* Mini header */}
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-warm-gray">

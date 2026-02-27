@@ -146,16 +146,14 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="mb-6 text-center">
           <Link href="/">
-            <h1 className="inline-flex items-end text-4xl">
+            <h1 className="inline-flex items-stretch text-4xl" style={{ lineHeight: "1" }}>
               <span className="font-logo font-semibold text-gold">
                 t&apos;day
               </span>
               <span
-                className="blinking-cursor ml-1"
-                style={{ fontSize: "0.8em", lineHeight: "1" }}
-              >
-                |
-              </span>
+                className="blinking-cursor ml-1 rounded-sm bg-forest self-stretch"
+                style={{ width: "2.5px" }}
+              />
             </h1>
           </Link>
           <p className="mt-2 text-sm text-warm-gray">

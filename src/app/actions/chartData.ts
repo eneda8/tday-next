@@ -125,7 +125,7 @@ export async function getAverageByDimension(
         count: { $sum: 1 },
       },
     },
-    { $match: { _id: { $ne: null, $ne: "" } } },
+    { $match: { _id: { $nin: [null, ""] } } },
     { $sort: { avg: -1 as const } },
     { $limit: 20 },
   ];

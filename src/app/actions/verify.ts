@@ -3,7 +3,7 @@
 import crypto from "crypto";
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
-import { sendVerificationEmail } from "@/lib/sendgrid";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function resendVerificationEmail(email: string) {
   try {

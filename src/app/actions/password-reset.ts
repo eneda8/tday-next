@@ -3,27 +3,10 @@
 import crypto from "crypto";
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
-
-async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log("=== Email (SendGrid not configured) ===");
-    console.log("To:", to);
-    console.log("Subject:", subject);
-    console.log("Body:", html);
-    console.log("========================================");
-    return;
-  }
-
-  const sgMail = (await import("@sendgrid/mail")).default;
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-  await sgMail.send({
-    to,
-    from: process.env.SENDGRID_FROM_EMAIL || "no-reply@tday.co",
-    subject,
-    html,
-  });
-}
+import {
+  sendPasswordResetEmail,
+  sendPasswordChangedEmail,
+} from "@/lib/email";
 
 export async function requestPasswordReset(email: string) {
   try {
@@ -43,17 +26,7 @@ export async function requestPasswordReset(email: string) {
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset/${token}`;
-
-    await sendEmail(
-      user.email,
-      "Reset Password Link",
-      `<p>You are receiving this because you (or someone else) have requested to reset the password for your t'day account.</p>
-      <p>Please click on the following link, or paste it into your browser to complete the process:</p>
-      <p><a href="${resetUrl}">${resetUrl}</a></p>
-      <p>This link will expire in 1 hour.</p>
-      <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>`
-    );
+    await sendPasswordResetEmail(user.email, token, user.username);
 
     return { success: true };
   } catch (err) {
@@ -96,12 +69,7 @@ export async function resetPassword(token: string, password: string, confirm: st
     await user.save();
 
     // Send confirmation email
-    await sendEmail(
-      user.email,
-      "Your password was changed",
-      `<p>This is a confirmation that the password for your t'day account (<strong>${user.email}</strong>) has just been changed.</p>
-      <p>If you did not make this change, please contact us immediately at support@tday.co.</p>`
-    );
+    await sendPasswordChangedEmail(user.email, user.username);
 
     return { success: true };
   } catch (err) {

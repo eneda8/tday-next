@@ -3,7 +3,7 @@
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
 import crypto from "crypto";
-import { sendVerificationEmail } from "@/lib/sendgrid";
+import { sendVerificationEmail } from "@/lib/email";
 
 interface RegisterUserInput {
   username: string;

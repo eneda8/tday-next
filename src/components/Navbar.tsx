@@ -100,14 +100,10 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
     { href: "/journal", label: "Journal", icon: "fas fa-book" },
   ];
 
-  // Sidebar menu links
+  // Sidebar menu links (items already in bottom tab bar are excluded)
   const secondaryLinks = [
-    { href: "/home", label: "Home", icon: "fas fa-home" },
-    { href: "/charts", label: "Charts", icon: "fas fa-chart-bar" },
-    { href: "/journal", label: "Journal", icon: "fas fa-book" },
     { href: "/bookmarks", label: "Bookmarks", icon: "fas fa-bookmark" },
     { href: "/search", label: "Search", icon: "fas fa-search" },
-    { href: "/profile", label: "Profile", icon: "fas fa-user-circle" },
     { href: "/settings", label: "Settings", icon: "fas fa-cog" },
   ];
 
@@ -370,42 +366,6 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
         }
       >
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          {/* Mobile-only main nav */}
-          <div className="mb-4 md:hidden">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-warm-gray">
-              Navigate
-            </p>
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
-                  (isActive(link.href)
-                    ? "bg-forest/10 text-forest"
-                    : "text-warm-brown hover:bg-cream-light")
-                }
-              >
-                <i className={link.icon + " w-4 text-center text-xs"} />
-                {link.label}
-              </Link>
-            ))}
-
-            {/* Rate button in mobile sidebar — only show if not posted */}
-            {!postedToday && (
-              <button
-                onClick={() => {
-                  setShowRateModal(true);
-                  setSidebarOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-warm-brown hover:bg-cream-light transition-colors"
-              >
-                <i className="fas fa-star w-4 text-center text-xs" />
-                Rate
-              </button>
-            )}
-          </div>
-
           {/* Secondary links */}
           <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-warm-gray">
             Menu
@@ -456,6 +416,60 @@ export default function Navbar({ postedToday = false }: NavbarProps) {
           </button>
         </div>
       </aside>
+
+      {/* ===== Mobile Bottom Tab Bar ===== */}
+      <nav
+        className="fixed -bottom-px left-0 right-0 z-40 border-t border-warm-border/40 bg-white shadow-[0_-2px_8px_rgba(62,53,41,0.08)] md:hidden"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1px)" }}
+      >
+        <div className="flex items-center justify-around px-2 py-1.5">
+          {[
+            { href: "/home", label: "Home", icon: "fas fa-home" },
+            { href: "/charts", label: "Charts", icon: "fas fa-chart-bar" },
+            { href: "/journal", label: "Journal", icon: "fas fa-book" },
+          ].map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={
+                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-medium transition-colors " +
+                (isActive(tab.href)
+                  ? "text-forest"
+                  : "text-warm-gray")
+              }
+            >
+              <i className={tab.icon + " text-lg"} />
+              {tab.label}
+            </Link>
+          ))}
+
+          {/* Rate tab */}
+          <button
+            onClick={() => !postedToday && setShowRateModal(true)}
+            className={
+              "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-medium transition-colors " +
+              (postedToday ? "text-forest" : "text-warm-gray")
+            }
+          >
+            <i className={"fas " + (postedToday ? "fa-check-circle" : "fa-star") + " text-lg"} />
+            {postedToday ? "Rated" : "Rate"}
+          </button>
+
+          {/* Profile tab */}
+          <Link
+            href="/profile"
+            className={
+              "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-medium transition-colors " +
+              (isActive("/profile")
+                ? "text-forest"
+                : "text-warm-gray")
+            }
+          >
+            <i className="fas fa-user-circle text-lg" />
+            Profile
+          </Link>
+        </div>
+      </nav>
 
       {/* ===== Rate Modal ===== */}
       {showRateModal && (

@@ -34,7 +34,7 @@ export default async function MainLayout({
   return (
     <div className="min-h-screen paper-bg">
       <Navbar postedToday={postedToday} />
-      <main>{children}</main>
+      <main className="pb-20 md:pb-0">{children}</main>
     </div>
   );
 }

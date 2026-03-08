@@ -13,6 +13,7 @@ import {
   settingsAccountSchema,
   changePasswordSchema,
 } from "@/lib/validations";
+import { sendAccountDeletedEmail } from "@/lib/email";
 import { countries } from "@/lib/countries";
 
 interface ActionResponse {
@@ -247,6 +248,9 @@ export async function deleteAccount(input: {
     if (hash !== user.hash) {
       return { error: "Password is incorrect" };
     }
+
+    // Send farewell email before deleting (we still have their info)
+    await sendAccountDeletedEmail(user.email, user.username);
 
     // Delete all user data
     await Post.deleteMany({ author: user._id });

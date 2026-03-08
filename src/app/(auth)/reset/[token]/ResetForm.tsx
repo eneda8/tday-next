@@ -42,7 +42,7 @@ export default function ResetForm({ token }: ResetFormProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-4">
+    <div className="flex min-h-screen items-center justify-center paper-bg px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-logo text-4xl text-gold hover:text-gold-hover">

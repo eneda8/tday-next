@@ -87,34 +87,35 @@ body {
   background-size: 100% 24px;
 }
 
-/* Notebook holes — three circles on the left margin */
-.paper-bg::before {
-  content: "";
-  position: fixed;
-  left: 20px;
-  top: 0;
-  bottom: 0;
-  width: 32px;
-  z-index: 10;
-  pointer-events: none;
-  background:
-    radial-gradient(circle 9px at 16px 140px, #E0D5C5 8px, transparent 9px),
-    radial-gradient(circle 9px at 16px 380px, #E0D5C5 8px, transparent 9px),
-    radial-gradient(circle 9px at 16px 620px, #E0D5C5 8px, transparent 9px);
-  background-repeat: no-repeat;
-}
+/* Notebook holes + red margin line — only on md+ screens */
+@media (min-width: 768px) {
+  .paper-bg::before {
+    content: "";
+    position: fixed;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    z-index: 10;
+    pointer-events: none;
+    background:
+      radial-gradient(circle 9px at 16px 140px, #E0D5C5 8px, transparent 9px),
+      radial-gradient(circle 9px at 16px 380px, #E0D5C5 8px, transparent 9px),
+      radial-gradient(circle 9px at 16px 620px, #E0D5C5 8px, transparent 9px);
+    background-repeat: no-repeat;
+  }
 
-/* Red margin line — classic notebook style */
-.paper-bg::after {
-  content: "";
-  position: fixed;
-  left: 64px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background-color: rgba(210, 100, 100, 0.5);
-  z-index: 10;
-  pointer-events: none;
+  .paper-bg::after {
+    content: "";
+    position: fixed;
+    left: 64px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: rgba(210, 100, 100, 0.5);
+    z-index: 10;
+    pointer-events: none;
+  }
 }
 
 /* Paper card — white card with subtle lined paper overlay */

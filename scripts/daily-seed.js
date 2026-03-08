@@ -75,8 +75,13 @@ async function run() {
   });
   console.log('Today:', today);
 
+  // ── Step 0: Reset all fake users so they can post today ──
+  await User.updateMany({ isVerified: false }, {
+    $set: { postedToday: false, todaysPost: '' }
+  });
+  console.log('Reset fake users for new day');
+
   // ── Step 1: Find fake users who haven't posted today ──
-  // This matches the original: User.findOne().where({ "isVerified": false }).where({"postedToday": false})
   const eligibleUsers = await User.find({ isVerified: false, postedToday: false });
   console.log('Found', eligibleUsers.length, 'eligible fake users');
 
